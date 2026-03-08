@@ -4,13 +4,22 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../source/utils/util.c 
+../source/utils/debug.c \
+../source/utils/ftm0.c \
+../source/utils/util.c \
+../source/utils/wait.c 
 
 C_DEPS += \
-./source/utils/util.d 
+./source/utils/debug.d \
+./source/utils/ftm0.d \
+./source/utils/util.d \
+./source/utils/wait.d 
 
 OBJS += \
-./source/utils/util.o 
+./source/utils/debug.o \
+./source/utils/ftm0.o \
+./source/utils/util.o \
+./source/utils/wait.o 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -25,7 +34,7 @@ source/utils/%.o: ../source/utils/%.c source/utils/subdir.mk
 clean: clean-source-2f-utils
 
 clean-source-2f-utils:
-	-$(RM) ./source/utils/util.d ./source/utils/util.o
+	-$(RM) ./source/utils/debug.d ./source/utils/debug.o ./source/utils/ftm0.d ./source/utils/ftm0.o ./source/utils/util.d ./source/utils/util.o ./source/utils/wait.d ./source/utils/wait.o
 
 .PHONY: clean-source-2f-utils
 

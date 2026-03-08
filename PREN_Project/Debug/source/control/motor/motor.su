@@ -1,1 +1,5 @@
-../source/control/motor/motor.c:10:6:motInit	4	static
+../source/control/motor/motor.c:29:6:motorInit	8	static
+../source/control/motor/motor.c:79:5:moveWay	32	static
+../source/control/motor/motor.c:140:5:moveRotation	16	static
+../source/control/motor/motor.c:143:6:resetTimers	8	static
+../source/control/motor/motor.c:156:9:setTimerValues	64	static
