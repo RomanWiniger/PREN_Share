@@ -1,9 +1,9 @@
 /**
  *--------------------------------------------------------------------\n
- *          PREN2 Gruppe 1, Stepper Motors          \n
+ *          PREN2 Group 1, Stepper Motors          \n
  *--------------------------------------------------------------------\n
  *
- * \brief         color utils
+ * \brief         stepper motor controller
  * \file
  * \author        Roman WIniger
  * \date          27.02.2026
@@ -17,12 +17,13 @@
 #include "globals.h"
 #include "wait.h"
 #include <stdint.h>
+#include <stdbool.h>
 
-
-
+#define FWD	(true)
+#define REV	(false)
 
 void resetTimers(void);
-int32_t setTimerValues(int32_t Mot1,int32_t Mot2, int32_t Mot3);
+int32_t setTimerValues(int32_t,int32_t,int32_t);
 
 
 
@@ -76,14 +77,45 @@ void motorInit(void){
 
 }
 
-int moveWay(uint32_t Mot1,bool dir1, uint32_t Mot2,bool dir2,uint32_t Mot3, bool dir3){
+int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 
 	int32_t mostMotor;
+	uint32_t mot1_Abs = 0;
+	uint32_t mot2_Abs = 0;
+	uint32_t mot3_Abs = 0;
+	bool mot1_Dir = FWD;
+	bool mot2_Dir = FWD;
+	bool mot3_Dir = FWD;
+
+	// Get Direction and use ABS-value of steps
+	if (mot1>=0){
+		mot1_Abs = (uint32_t)mot1;
+		mot1_Dir = FWD;
+	}else{
+		mot1_Abs = (uint32_t)(-mot1);
+		mot1_Dir = REV;
+	}
+
+	if (mot2>=0){
+		mot2_Abs = (uint32_t)mot1;
+		mot2_Dir = FWD;
+	}else{
+		mot2_Abs = (uint32_t)(-mot1);
+		mot2_Dir = REV;
+	}
+
+	if (mot3>=0){
+		mot3_Abs = (uint32_t)mot1;
+		mot3_Dir = FWD;
+	}else{
+		mot3_Abs = (uint32_t)(-mot1);
+		mot3_Dir = REV;
+	}
 
 #if ENABLE_DIR
-	if(dir1){MOTOR1_DIR_FWD();}else{MOTOR1_DIR_REV();}
-	if(dir2){MOTOR2_DIR_FWD();}else{MOTOR2_DIR_REV();}
-	if(dir3){MOTOR3_DIR_FWD();}else{MOTOR3_DIR_REV();}
+	if(mot1_Dir){MOTOR1_DIR_FWD();}else{MOTOR1_DIR_REV();}
+	if(mot2_Dir){MOTOR2_DIR_FWD();}else{MOTOR2_DIR_REV();}
+	if(mot3_Dir){MOTOR3_DIR_FWD();}else{MOTOR3_DIR_REV();}
 #endif
 
 
@@ -94,33 +126,29 @@ int moveWay(uint32_t Mot1,bool dir1, uint32_t Mot2,bool dir2,uint32_t Mot3, bool
 #endif
 
 
-	Motor1_Step_Max = Mot1;
-	Motor2_Step_Max = Mot2;
-	Motor3_Step_Max = Mot3;
+	Motor1_Step_Max = mot1;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
+	Motor2_Step_Max = mot2;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
+	Motor3_Step_Max = mot3;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
 
-	mostMotor = setTimerValues(Mot1,Mot2,Mot3);		//Set timer Values (Global)
+	mostMotor = setTimerValues(mot1,mot2,mot3);		//Set timer Values (Global)
 
-	// Set Channel Value: 1 = 0.52ms
-	if(Mot1 !=0){
+	// Set Initial Pause Value
+	if(mot1 !=0){
 		if(mostMotor==1){FTM0->CONTROLS[MOTOR1_TIMER_CHAN].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR1_TIMER_CHAN].CnV =FIRST_PULSE_START_MOD+Motor1_Pause/2;}
 	}
-	if(Mot2 !=0){
+	if(mot2 !=0){
 		if(mostMotor==2){FTM0->CONTROLS[MOTOR2_TIMER_CHAN].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR2_TIMER_CHAN].CnV =FIRST_PULSE_START_MOD+Motor2_Pause/2;}
 	}
-	if(Mot3!=0){
+	if(mot3!=0){
 		if(mostMotor==3){FTM0->CONTROLS[MOTOR3_TIMER_CHAN].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR3_TIMER_CHAN].CnV =FIRST_PULSE_START_MOD+Motor3_Pause/2;}
 	}
-	// activate Timer Interrupts (Channels) unless Stepnumber isnt Zero
 
-	if(Mot1!=0){FTM0->CONTROLS[MOTOR1_TIMER_CHAN].CnSC |= FTM_CnSC_CHIE(1);}
-	if(Mot2!=0){FTM0->CONTROLS[MOTOR2_TIMER_CHAN].CnSC |= FTM_CnSC_CHIE(1);}
-	if(Mot3!=0){FTM0->CONTROLS[MOTOR3_TIMER_CHAN].CnSC |= FTM_CnSC_CHIE(1);}
+	// activate Timer Interrupts (Channels) unless Step number isn't Zero
+	if(mot1!=0){FTM0->CONTROLS[MOTOR1_TIMER_CHAN].CnSC |= FTM_CnSC_CHIE(1);}
+	if(mot2!=0){FTM0->CONTROLS[MOTOR2_TIMER_CHAN].CnSC |= FTM_CnSC_CHIE(1);}
+	if(mot3!=0){FTM0->CONTROLS[MOTOR3_TIMER_CHAN].CnSC |= FTM_CnSC_CHIE(1);}
 
-
-	Motor1_Step_Max = Mot1;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
-	Motor2_Step_Max = Mot2;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
-	Motor3_Step_Max = Mot3;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
-
+	// Mux Pins to FTM-Channel
 	MOTOR1_STEP_FTM();
 	MOTOR2_STEP_FTM();
 	MOTOR3_STEP_FTM();
@@ -129,17 +157,20 @@ int moveWay(uint32_t Mot1,bool dir1, uint32_t Mot2,bool dir2,uint32_t Mot3, bool
 	ftm0StartIRQ();
 
 	while (true){
-		if((Motor1_Step_Curr>=Mot1)&&(Motor2_Step_Curr>=Mot2)&&(Motor3_Step_Curr>=Mot3)){break;}
+		if((Motor1_Step_Curr>=mot1)&&(Motor2_Step_Curr>=mot2)&&(Motor3_Step_Curr>=mot3)){break;}
 	}
 
-	waitMs(MOTOR_PULSE_MS*10);	//Wait 10 Pulsewidth for last Pulse to finish
+	waitMs(MOTOR_PULSE_MS*10);	//Wait 10 Pulse-width for last Pulse to finish
 	resetTimers();
 
 	return 1;
 }
+
 int moveRotation(uint32_t RotSteps){
+	return 1;
 	//Todo
-};
+}
+
 void resetTimers(void){
 
 	ftm0StopIRQ();
@@ -152,6 +183,7 @@ void resetTimers(void){
 	Motor3_Step_Max=0;
 
 }
+
 
 int32_t setTimerValues(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 	int32_t mostMotor;
