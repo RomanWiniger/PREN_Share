@@ -1,0 +1,9 @@
+../source/utils/debug.h:34:20:logif	32	static
+../source/utils/wait.c:27:6:waitStartCycleCounter	4	static
+../source/utils/wait.c:32:6:waitStopCycleCounter	4	static
+../source/utils/wait.c:45:6:waitInit	4	static
+../source/utils/wait.c:64:10:waitStartWatch	4	static
+../source/utils/wait.c:70:10:waitGetTimeMs	24	static
+../source/utils/wait.c:77:10:waitGetTimeUs	24	static
+../source/utils/wait.c:85:6:waitMs	40	static
+../source/utils/wait.c:94:6:waitUs	24	static

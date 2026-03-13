@@ -1,0 +1,166 @@
+/**
+ *--------------------------------------------------------------------\n
+ *          HSLU T&A Hochschule Luzern Technik+Architektur            \n
+ *--------------------------------------------------------------------\n
+ *
+ * \brief         Common settings of the FTM0
+ * \file
+ * \author        Christian Jost, christian.jost@hslu.ch
+ * \date          04.04.2020
+ *
+ *--------------------------------------------------------------------
+ */
+
+#include "platform.h"
+#include "ftm0.h"
+#include "globals.h"
+
+/**
+ * Default handler is called if there is no handler for the FTM0 channel or tof interrupt
+ */
+void Default_Handler_FTM0()
+{
+  __asm("bkpt"); // Still a hacker? ;-)
+}
+
+//Used Channels:
+void FTM0CH0_IRQHandler(void);
+void FTM0CH1_IRQHandler(void);
+void FTM0CH2_IRQHandler(void);
+void FTM0CH4_IRQHandler(void);
+void FTM0TOF_IRQHandler(void);
+
+// not used Channels
+//void FTM0CH0_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+//void FTM0CH1_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+//void FTM0CH2_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+void FTM0CH3_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+//void FTM0CH4_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+void FTM0CH5_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+void FTM0CH6_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+void FTM0CH7_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+//void FTM0TOF_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+
+
+#define CHF_CHIE_MASK       (FTM_CnSC_CHF_MASK | FTM_CnSC_CHIE_MASK)
+#define TOF_TOIE_MASK       (FTM_SC_TOF_MASK | FTM_SC_TOIE_MASK)
+
+/**
+ * Interrupt handler to distribute the different interrupt sources of the FTM0:
+ * - channel 0..7
+ * - timer overflow
+ */
+void FTM0_IRQHandler(void)
+{
+  if ((FTM0->CONTROLS[0].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH0_IRQHandler();
+  if ((FTM0->CONTROLS[1].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH1_IRQHandler();
+  if ((FTM0->CONTROLS[2].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH2_IRQHandler();
+  if ((FTM0->CONTROLS[3].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH3_IRQHandler();
+  if ((FTM0->CONTROLS[4].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH4_IRQHandler();
+  if ((FTM0->CONTROLS[5].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH5_IRQHandler();
+  if ((FTM0->CONTROLS[6].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH6_IRQHandler();
+  if ((FTM0->CONTROLS[7].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH7_IRQHandler();
+  if ((FTM0->SC & TOF_TOIE_MASK) == TOF_TOIE_MASK) FTM0TOF_IRQHandler();
+}
+
+void ftm0Init(bool mod_max, uint32_t modulo)
+{
+  // set clockgating for FTM0
+  SIM->SCGC6 |= SIM_SCGC6_FTM0(1);
+  if(mod_max){  FTM0->MOD = 0xFFFF;}else{FTM0->MOD =modulo;}
+}
+
+////
+void ftm0StartClk(int CLK_Source, int Prescaler)
+{
+
+  FTM0->SC = FTM_SC_CLKS(CLK_Source) |  FTM_SC_PS(Prescaler);
+}
+
+
+void ftm0StartIRQ()
+{
+  // Enable FTM0 interrupt on NVIC with Prio: PRIO_FTM0 (defined in platform.h)
+  NVIC_SetPriority(FTM0_IRQn, PRIO_FTM0);       // set interrupt priority
+  NVIC_EnableIRQ(FTM0_IRQn);                    // enable interrupt
+
+}
+
+void ftm0StopIRQ()
+{
+  // Disanable FTM0 interrupt on NVIC wit)
+  NVIC_DisableIRQ(FTM0_IRQn);
+  FTM0->CONTROLS[0].CnSC &= ~FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[3].CnSC &= ~FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[6].CnSC &= ~FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[7].CnSC &= ~FTM_CnSC_CHIE_MASK;
+
+}
+
+
+void FTM0TOF_IRQHandler(void){
+
+	FTM0->SC &= ~FTM_SC_TOF_MASK;
+}
+
+void FTM0CH0_IRQHandler(void){
+	FTM0->CONTROLS[0].CnSC &= ~FTM_CnSC_CHF(1);		//Clear TOD interrupt flag
+}
+
+void FTM0CH1_IRQHandler(void){
+	FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
+													// Do not manipulate!!!!!!
+		// If Mx_Step is false: 	Output was high before
+		if (M1_Step == true){
+			FTM0->CONTROLS[1].CnV += (Motor1_Pause);				// Set Distance to end Pause
+			M1_Step=false;											// Output was toggled to true in the current ISR
+			if (Motor1_Step_Curr >= Motor1_Step_Max){
+				FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
+			}
+		}else{				 // Output was low before: Start Pulse
+			FTM0->CONTROLS[1].CnV  += MOTOR_PULSE;					// Set Distance to end Pulse
+			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
+			M1_Step=true;											// Output was toggled to false in the current ISR
+		}
+
+}
+
+void FTM0CH2_IRQHandler(void){
+	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
+													// Do not manipulate!!!!!!
+	// If Mx_Step is true: 	Output was high before
+		if (M2_Step == true){
+			FTM0->CONTROLS[2].CnV += (Motor2_Pause);	// Set Distance to end Pause
+			M2_Step=false;
+			if (Motor2_Step_Curr >= Motor2_Step_Max){
+				FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
+			}// Output was toggled to false in the current ISR
+		}else{				 // Output was low before: Start Pulse
+			FTM0->CONTROLS[2].CnV  += MOTOR_PULSE;					// Set Distance to next Pulse
+			Motor2_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
+			M2_Step=true;											// Output was toggled to false in the current ISR
+		}
+
+}
+
+void FTM0CH4_IRQHandler(void){
+	FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
+													// Do not manipulate!!!!!!
+// Do not manipulate!!!!!!
+	// If Mx_Step is true: 	Output was high before
+		if (M3_Step == true){
+			FTM0->CONTROLS[4].CnV += (Motor3_Pause);	// Set Distance to end Pause
+			M3_Step=false;
+			if (Motor3_Step_Curr >= Motor3_Step_Max){
+				FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
+			}// Output was toggled to false in the current ISR
+		}else{				 // Output was low before: Start Pulse
+			FTM0->CONTROLS[4].CnV  += MOTOR_PULSE;					// Set Distance to next Pulse
+			Motor3_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
+			M3_Step=true;	}										// Output was toggled to false in the current ISR
+}
+

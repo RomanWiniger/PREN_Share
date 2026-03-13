@@ -1,0 +1,5 @@
+../source/led.c:25:6:ledSetOn	4	static
+../source/led.c:35:6:ledSetOff	4	static
+../source/led.c:49:6:ledIsOn	16	static
+../source/led.c:66:8:ledParseCommand	16	static
+../source/led.c:100:6:ledInit	8	static
