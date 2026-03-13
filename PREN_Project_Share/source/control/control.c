@@ -39,11 +39,11 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 
 
 	if ((command.StepsRot <= 0)&&(command.ErrorHandling==false)){
-		moveWay(command.Steps1,command.Dir1,command.Steps2,command.Dir2,command.Steps3,command.Dir3);
+		moveWay(command.Steps1,command.Steps2,command.Steps3);
 	}else if ((command.StepsRot > 0)&&(command.ErrorHandling==false)){
 		moveRotation(command.StepsRot);
 	}else if (command.ErrorHandling==true){
 		// Use last saved Values but with contrary direction
-		moveWay(M1_Last_Step,!M1_Last_Dir,M2_Last_Step,!M2_Last_Dir,M3_Last_Step,!M3_Last_Dir);;
+		moveWay(M1_Last_Step,M2_Last_Step,M3_Last_Step);;
 	}
 }

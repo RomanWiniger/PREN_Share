@@ -8,5 +8,5 @@
 ../source/com/term.c:122:6:termParseCommand	48	static
 ../source/com/term.c:181:6:termDoWork	520	static
 ../source/com/term.c:203:6:termInit	16	static
-../source/com/term.c:214:15:startHandler	56	static
+../source/com/term.c:214:15:startHandler	48	static
 ../source/com/term.c:234:6:commandInit	8	static
