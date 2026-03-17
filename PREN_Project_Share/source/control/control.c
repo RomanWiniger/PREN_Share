@@ -2,6 +2,7 @@
 #include "platform.h"
 #include "term.h"
 #include "motor.h"
+#include "coil.h"
 #include "wait.h"
 #include <Stdbool.h>
 
@@ -29,14 +30,13 @@ void controlInit(){
 
 	waitInit();
 	motorInit();
+	coilInit();
 
 }
 
 void newCommand(struct ReceivedCommand command)//therm.c calls this function if a new command was sent
 {
 	//TODO: Activate Coil Pin if Act.Coil == true;
-
-
 
 	if ((command.StepsRot <= 0)&&(command.ErrorHandling==false)){
 		moveWay(command.Steps1,command.Steps2,command.Steps3);

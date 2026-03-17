@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define DEBUG_MODE			1
+
 #define CLK_SRC_GLOBAL		2
 #define PS_GLOBAL			3
 #define TIMER_MODULO_HEX	(0xFFFF)

@@ -18,6 +18,7 @@ board \
 device \
 drivers \
 source/com \
+source/control/coil \
 source/control \
 source/control/motor \
 source \

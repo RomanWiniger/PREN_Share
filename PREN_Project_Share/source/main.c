@@ -16,6 +16,11 @@
 #include "uart.h"
 #include "term.h"
 #include "control.h"
+#include "globals.h"
+#if DEBUG_MODE
+
+	#include "motor.h"
+#endif
 
 
 
@@ -29,6 +34,29 @@ int main(void)
   commandInit();
   controlInit();
 
+#if DEBUG_MODE
+
+  moveWay(-3000,5000,2000);
+  moveWay(3000,-5000,2000);
+  moveWay(6000,5000,-3000);
+
+  //BitMonitor PORTA
+  PORTA->PCR;
+  GPIOA->PDDR;
+  GPIOA->PDOR;
+
+  //BitMonitor PORTB
+  PORTB->PCR;
+  GPIOB->PDDR;
+  GPIOB->PDOR;
+
+#else
+  while(TRUE)
+    {
+      termDoWork();//lauscht an der UART Verbindung
+    }
+
+#endif
   while(TRUE)
   {
     termDoWork();//lauscht an der UART Verbindung
