@@ -1,18 +1,14 @@
-source/control/control.o source/control/control.d: \
- ../source/control/control.c ../source/control/control.h \
- C:\Users\roman\myGitRepo\PREN_Project_Share\source\com/term.h \
+source/control/coil.o source/control/coil.d: ../source/control/coil.c \
+ ../source/control/coil.h ../source/control/coil_config.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\source/platform.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\device/MK22F51212.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/core_cm4.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/cmsis_version.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/cmsis_compiler.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/cmsis_gcc.h \
- C:\Users\roman\myGitRepo\PREN_Project_Share\device/system_MK22F51212.h \
- C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\motor/motor.h \
- ../source/control/coil.h \
- C:\Users\roman\myGitRepo\PREN_Project_Share\source\utils/wait.h
-../source/control/control.h:
-C:\Users\roman\myGitRepo\PREN_Project_Share\source\com/term.h:
+ C:\Users\roman\myGitRepo\PREN_Project_Share\device/system_MK22F51212.h
+../source/control/coil.h:
+../source/control/coil_config.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\source/platform.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\device/MK22F51212.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/core_cm4.h:
@@ -20,6 +16,3 @@ C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/cmsis_version.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/cmsis_compiler.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/cmsis_gcc.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\device/system_MK22F51212.h:
-C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\motor/motor.h:
-../source/control/coil.h:
-C:\Users\roman\myGitRepo\PREN_Project_Share\source\utils/wait.h:

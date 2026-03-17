@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../source/control/coil.c \
 ../source/control/control.c 
 
 C_DEPS += \
+./source/control/coil.d \
 ./source/control/control.d 
 
 OBJS += \
+./source/control/coil.o \
 ./source/control/control.o 
 
 
@@ -25,7 +28,7 @@ source/control/%.o: ../source/control/%.c source/control/subdir.mk
 clean: clean-source-2f-control
 
 clean-source-2f-control:
-	-$(RM) ./source/control/control.d ./source/control/control.o
+	-$(RM) ./source/control/coil.d ./source/control/coil.o ./source/control/control.d ./source/control/control.o
 
 .PHONY: clean-source-2f-control
 

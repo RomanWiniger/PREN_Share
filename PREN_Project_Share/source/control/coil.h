@@ -13,4 +13,4 @@
 int coil_ctrl(bool);
 int coilInit();
 
-#endif /* CONTROL_COIL_COIL_H_ */
+#endif /* COIL_H_ */
