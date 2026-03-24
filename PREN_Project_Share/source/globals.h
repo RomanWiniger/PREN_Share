@@ -5,8 +5,10 @@
 #include <stdbool.h>
 
 #define DEBUG_MODE			1
+#define TODO					1
 
-#define CLK_SRC_GLOBAL		2
+
+#define CLK_SRC_GLOBAL		1
 #define PS_GLOBAL			3
 #define TIMER_MODULO_HEX	(0xFFFF)
 #define TIMER_MODULO_INT	(65535)
@@ -40,16 +42,29 @@
 	#define TIMER_CLK_SCAL		(TIMER_CLK/128)
 #endif
 
+#define TIMER_CLK_SCAL_MHZ		(TIMER_CLK_SCAL/1000000)
 
+
+//	   -----------------	                       ------
+//	  | 	            | 	                      |
+//    | 	            | 	                      |
+//----                   -------------------------
+//    <-MOTOR_PULSE_NS-> <- MIN_STEP_DISTANCE_NS->
+//
 
 // Motor
 
 //Set Overall Parameters
-#define MOTOR_PULSE_MS			1
-#define MIN_STEP_DISTANCE_MS	2	//Start Pulse to Start Pulse
+#define MOTOR_PULSE_NS			10000	//Start Pulse to End Pulse
+#define MIN_STEP_DISTANCE_NS	10000	//End Pulse to Start Pulse
 #define FIRST_PULSE_START_MOD	1000	//Start first Pulse at this Modulo Value of the Channel
 
-#define MOTOR_PULSE			((MOTOR_PULSE_MS * TIMER_CLK_SCAL) / 1000)
+#define TIME_PER_MOD_TICK_NS	(1000/TIMER_CLK_SCAL_MHZ)
+#define MOTOR_PULSE_MOD_TICK	(MOTOR_PULSE_NS/TIME_PER_MOD_TICK_NS)
+#define MOTOR_MINPAUSE_MOD_TICK	((MIN_STEP_DISTANCE_NS)/TIME_PER_MOD_TICK_NS)
+//#define MOTOR_PULSE			((MOTOR_PULSE_US * TIMER_CLK_SCAL) / 10000)
+
+#define NUM_CORRECTOR_LOOPS		2
 
 extern bool M1_Step;
 extern bool M2_Step;
@@ -57,19 +72,33 @@ extern bool M3_Step;
 extern int32_t Motor1_Step_Curr;
 extern int32_t Motor2_Step_Curr;
 extern int32_t Motor3_Step_Curr;
+extern int32_t MotorRot_Step_Curr;
+extern int32_t Motor1_Step_OF;	// Amount of Overflows 0xFFFF
+extern int32_t Motor2_Step_OF;	// Amount of Overflows 0xFFFF
+extern int32_t Motor3_Step_OF;	// Amount of Overflows 0xFFFF
+extern int32_t Motor1_Step_OF_Curr;	// Current Amount of Overflows 0xFFFF
+extern int32_t Motor2_Step_OF_Curr;	// Current Amount of Overflows 0xFFFF
+extern int32_t Motor3_Step_OF_Curr;	// Current Amount of Overflows 0xFFFF
 extern int32_t Motor1_Step_Max;
 extern int32_t Motor2_Step_Max;
 extern int32_t Motor3_Step_Max;
+extern int32_t MotorRot_Step_Max;
 extern int16_t Motor1_Pause;		//1950 = 1s
 extern int16_t Motor2_Pause;		//1950 = 1s
 extern int16_t Motor3_Pause; 		//1950 = 1s
+extern int32_t Motor1_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tick to Stepp
+extern int32_t Motor2_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tick to Stepp
+extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tick to Stepp
+
 
 // Remember last Values for ErrorHandling
 extern int32_t M1_Last_Step;
 extern int32_t M2_Last_Step;
 extern int32_t M3_Last_Step;
+extern int32_t MR_Last_Step;
 extern bool M1_Last_Dir;
 extern bool M2_Last_Dir;
 extern bool M3_Last_Dir;
+extern bool MR_Last_Dir;
 
 #endif

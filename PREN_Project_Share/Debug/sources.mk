@@ -18,10 +18,10 @@ board \
 device \
 drivers \
 source/com \
+source/control/coil \
 source/control \
 source/control/motor \
 source \
 source/utils \
 startup \
-source/control/coil \
 

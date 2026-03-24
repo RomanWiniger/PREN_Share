@@ -14,6 +14,7 @@
 #include "platform.h"
 #include "ftm0.h"
 #include "globals.h"
+#include "motor_config.h"
 
 /**
  * Default handler is called if there is no handler for the FTM0 channel or tof interrupt
@@ -77,12 +78,20 @@ void ftm0StartClk(int CLK_Source, int Prescaler)
   FTM0->SC = FTM_SC_CLKS(CLK_Source) |  FTM_SC_PS(Prescaler);
 }
 
+void ftm0StopClk()
+{
+  FTM0->SC &= ~FTM_SC_CLKS(0);
+}
+
 
 void ftm0StartIRQ()
 {
   // Enable FTM0 interrupt on NVIC with Prio: PRIO_FTM0 (defined in platform.h)
   NVIC_SetPriority(FTM0_IRQn, PRIO_FTM0);       // set interrupt priority
   NVIC_EnableIRQ(FTM0_IRQn);                    // enable interrupt
+  FTM0->CONTROLS[0].CnSC |= FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[1].CnSC |= FTM_CnSC_CHIE_MASK;
+  FTM0->CONTROLS[2].CnSC |= FTM_CnSC_CHIE_MASK;
 
 }
 
@@ -113,54 +122,87 @@ void FTM0CH0_IRQHandler(void){
 
 void FTM0CH1_IRQHandler(void){
 	FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
-													// Do not manipulate!!!!!!
-		// If Mx_Step is false: 	Output was high before
-		if (M1_Step == true){
+	// Do not manipulate!!!!!!
+
+	// If Mx_Step is false: 	Output was high before
+		if (MOTOR1_STEP_STATUS()){
+			MOTOR1_STEP_GPIO_LOW();									// Output was toggled to true in the current ISR
 			FTM0->CONTROLS[1].CnV += (Motor1_Pause);				// Set Distance to end Pause
-			M1_Step=false;											// Output was toggled to true in the current ISR
+
+			// Corrector for rounding errors in calculation
+			for(int i = 0;i<NUM_CORRECTOR_LOOPS;i++){
+				if (Motor1_Step_Corrector[i]){
+					if((Motor1_Step_Curr%Motor1_Step_Corrector[i]) == 0){
+						FTM0->CONTROLS[1].CnV += 1;
+					}
+				}
+			}
+
+			// Disable Interrupt if all Steps are done
 			if (Motor1_Step_Curr >= Motor1_Step_Max){
 				FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
 			}
 		}else{				 // Output was low before: Start Pulse
-			FTM0->CONTROLS[1].CnV  += MOTOR_PULSE;					// Set Distance to end Pulse
+			MOTOR1_STEP_GPIO_HIGH();
+			FTM0->CONTROLS[1].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to end Pulse
 			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
-			M1_Step=true;											// Output was toggled to false in the current ISR
 		}
-
 }
 
 void FTM0CH2_IRQHandler(void){
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
 	// If Mx_Step is true: 	Output was high before
-		if (M2_Step == true){
+		if (MOTOR2_STEP_STATUS()){
+			MOTOR2_STEP_GPIO_LOW();
 			FTM0->CONTROLS[2].CnV += (Motor2_Pause);	// Set Distance to end Pause
-			M2_Step=false;
+
+			// Corrector for rounding errors in calculation
+			for(int i = 0;i<NUM_CORRECTOR_LOOPS;i++){
+				if (Motor2_Step_Corrector[i]){
+					if((Motor2_Step_Curr%Motor2_Step_Corrector[i]) == 0){
+						FTM0->CONTROLS[2].CnV += 1;
+					}
+				}
+			}
+
+			// Disable Interrupt if all Steps are done
 			if (Motor2_Step_Curr >= Motor2_Step_Max){
 				FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
-			}// Output was toggled to false in the current ISR
+			}
 		}else{				 // Output was low before: Start Pulse
-			FTM0->CONTROLS[2].CnV  += MOTOR_PULSE;					// Set Distance to next Pulse
+			MOTOR2_STEP_GPIO_HIGH();
+			FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to next Pulse
 			Motor2_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
-			M2_Step=true;											// Output was toggled to false in the current ISR
 		}
-
 }
 
 void FTM0CH4_IRQHandler(void){
 	FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
-// Do not manipulate!!!!!!
-	// If Mx_Step is true: 	Output was high before
-		if (M3_Step == true){
+	// If Status is true: 	Output was high before
+		if (MOTOR3_STEP_STATUS()){
+			MOTOR3_STEP_GPIO_LOW();
 			FTM0->CONTROLS[4].CnV += (Motor3_Pause);	// Set Distance to end Pause
-			M3_Step=false;
+
+			// Corrector for rounding errors in calculation
+			for(int i = 0;i<NUM_CORRECTOR_LOOPS;i++){
+				if (Motor3_Step_Corrector[i]){
+					if((Motor3_Step_Curr%Motor3_Step_Corrector[i]) == 0){
+						FTM0->CONTROLS[4].CnV += 1;
+					}
+				}
+			}
+
+			// Disable Interrupt if all Steps are done
 			if (Motor3_Step_Curr >= Motor3_Step_Max){
 				FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
-			}// Output was toggled to false in the current ISR
+			}
 		}else{				 // Output was low before: Start Pulse
-			FTM0->CONTROLS[4].CnV  += MOTOR_PULSE;					// Set Distance to next Pulse
+			MOTOR3_STEP_GPIO_HIGH();
+			FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to next Pulse
 			Motor3_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
-			M3_Step=true;	}										// Output was toggled to false in the current ISR
+			}
 }
+
 

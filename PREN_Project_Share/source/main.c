@@ -17,6 +17,8 @@
 #include "term.h"
 #include "control.h"
 #include "globals.h"
+
+#include "motor_config.h"
 #if DEBUG_MODE
 
 	#include "motor.h"
@@ -29,16 +31,17 @@
  */
 int main(void)
 {
-
   termInit(57600);
   commandInit();
   controlInit();
 
+  MOTOR1_STEP_GPIO();
+
 #if DEBUG_MODE
 
-  moveWay(-3000,5000,2000);
-  moveWay(3000,-5000,2000);
-  moveWay(6000,5000,-3000);
+  moveWay(-300,500,800);
+  moveWay(2000,-1000,1567);
+  moveWay(12,456,-987);
 
   //BitMonitor PORTA
   PORTA->PCR;
@@ -57,10 +60,6 @@ int main(void)
     }
 
 #endif
-  while(TRUE)
-  {
-    termDoWork();//lauscht an der UART Verbindung
-  }
 
   // Never leave main
   for (;;){}
