@@ -143,9 +143,22 @@ void FTM0CH1_IRQHandler(void){
 				FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
 			}
 		}else{				 // Output was low before: Start Pulse
+#if OVERFLOW_HANDLING
+			if(Motor1_Step_OF_Curr>0){
+				// Leave ChV with the current value
+				Motor1_Step_OF_Curr--;
+			}
+			else{
+				MOTOR1_STEP_GPIO_HIGH();
+				FTM0->CONTROLS[1].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
+				Motor1_Step_Curr +=1;
+				Motor1_Step_OF_Curr = Motor1_Step_OF;			// Restart Overflow counter
+			}
+#else
 			MOTOR1_STEP_GPIO_HIGH();
 			FTM0->CONTROLS[1].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to end Pulse
 			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
+#endif
 		}
 }
 
@@ -171,9 +184,22 @@ void FTM0CH2_IRQHandler(void){
 				FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
 			}
 		}else{				 // Output was low before: Start Pulse
+#if OVERFLOW_HANDLING
+			if(Motor2_Step_OF_Curr>0){
+				// Leave ChV with the current value
+				Motor2_Step_OF_Curr--;
+			}
+			else{
+				MOTOR2_STEP_GPIO_HIGH();
+				FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
+				Motor2_Step_Curr +=1;
+				Motor2_Step_OF_Curr = Motor2_Step_OF;			// Restart Overflow counter
+			}
+#else
 			MOTOR2_STEP_GPIO_HIGH();
 			FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to next Pulse
 			Motor2_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
+#endif
 		}
 }
 
@@ -182,11 +208,11 @@ void FTM0CH4_IRQHandler(void){
 													// Do not manipulate!!!!!!
 	// If Status is true: 	Output was high before
 		if (MOTOR3_STEP_STATUS()){
-			MOTOR3_STEP_GPIO_LOW();
-			FTM0->CONTROLS[4].CnV += (Motor3_Pause);	// Set Distance to end Pause
 
+				MOTOR3_STEP_GPIO_LOW();
+				FTM0->CONTROLS[4].CnV += (Motor3_Pause);	// Set Distance to end Pause
 
-			// Corrector for rounding errors in calculation
+				// Corrector for rounding errors in calculation
 			for(int i = 0;i<NUM_CORRECTOR_LOOPS;i++){
 				if (Motor3_Step_Corrector[i]){
 					if((Motor3_Step_Curr%Motor3_Step_Corrector[i]) == 0){
@@ -200,9 +226,22 @@ void FTM0CH4_IRQHandler(void){
 				FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
 			}
 		}else{				 // Output was low before: Start Pulse
-			MOTOR3_STEP_GPIO_HIGH();
-			FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to next Pulse
-			Motor3_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
+#if OVERFLOW_HANDLING
+			if(Motor3_Step_OF_Curr>0){
+				// Leave ChV with the current value
+				Motor3_Step_OF_Curr--;
+			}
+			else{
+				MOTOR3_STEP_GPIO_HIGH();
+				FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
+				Motor3_Step_Curr +=1;
+				Motor2_Step_OF_Curr = Motor2_Step_OF;			// Restart Overflow counter
+			}
+#else
+				MOTOR3_STEP_GPIO_HIGH();
+				FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
+				Motor3_Step_Curr +=1;							// Increment Pulse-Counter (Beginning of Pulse)
+#endif
 			}
 
 }

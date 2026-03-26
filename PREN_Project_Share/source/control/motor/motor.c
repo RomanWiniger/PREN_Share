@@ -16,6 +16,7 @@
 #include "ftm0.h"
 #include "globals.h"
 #include "wait.h"
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
@@ -433,7 +434,7 @@ int32_t setTimerValues(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		}while((tmp_M1_Pause>=INT16_MAX || tmp_M2_Pause>=INT16_MAX||tmp_M3_Pause>=INT16_MAX));
 #else
 		if((tmp_M1_Pause>=INT16_MAX || tmp_M2_Pause>=INT16_MAX||tmp_M3_Pause>=INT16_MAX)){
-			printf("error!");
+			printf("Error\n");
 		};
 #endif
 

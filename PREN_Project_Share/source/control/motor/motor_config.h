@@ -13,7 +13,7 @@
 #define ENABLE_DIR			1
 #define ENABLE_EN			1
 #define ENABLE_ROT			0
-#define OVERFLOW_HANDLING	1
+#define OVERFLOW_HANDLING	0
 
 //Direction
 #define FWD	(true)

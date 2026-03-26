@@ -11,5 +11,5 @@ C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/core_cm4.h:1814:22:__NVIC_SetP
 ../source/utils/ftm0.c:114:6:FTM0TOF_IRQHandler	4	static
 ../source/utils/ftm0.c:119:6:FTM0CH0_IRQHandler	4	static
 ../source/utils/ftm0.c:123:6:FTM0CH1_IRQHandler	16	static
-../source/utils/ftm0.c:152:6:FTM0CH2_IRQHandler	16	static
-../source/utils/ftm0.c:180:6:FTM0CH4_IRQHandler	16	static
+../source/utils/ftm0.c:165:6:FTM0CH2_IRQHandler	16	static
+../source/utils/ftm0.c:206:6:FTM0CH4_IRQHandler	16	static
