@@ -39,9 +39,9 @@ int main(void)
 
 #if DEBUG_MODE
 
-  moveWay(-300,500,800);
-  moveWay(2000,-1000,1567);
-  moveWay(12,456,-987);
+  moveWay(300,500,800);
+  moveWay(-3000,-1000,1067);
+  moveWay(120,456,-1000);
 
   //BitMonitor PORTA
   PORTA->PCR;

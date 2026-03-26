@@ -82,11 +82,11 @@ void motorInit(void){
 #endif
 
 #if ENABLE_EN
-	MOTOR1_EN_GPIO();
-	MOTOR2_EN_GPIO();
-	MOTOR3_EN_GPIO();
+	MOTOR1_EN_GPIO(); MOTOR1_EN_DISABLE();
+	MOTOR2_EN_GPIO(); MOTOR2_EN_DISABLE();
+	MOTOR3_EN_GPIO(); MOTOR3_EN_DISABLE();
 	#if ENABLE_ROT
-		MOTORROT_EN_GPIO();
+		MOTORROT_EN_GPIO(); MOTORROT_EN_DISABLE();
 		MOTORROT_EN_OUTPUT();
 	#endif
 		MOTOR_EN_OUTPUT();
@@ -211,14 +211,17 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	while (true){
 		if((Motor1_Step_Curr>=mot1_Abs)&&(Motor2_Step_Curr>=mot2_Abs)&&(Motor3_Step_Curr>=mot3_Abs)){break;}
 	}
+	MOTOR1_STEP_GPIO_LOW();
+	MOTOR2_STEP_GPIO_LOW();
+	MOTOR3_STEP_GPIO_LOW();
 
 	//////////////////////////////////////////////////////////////////
 	///  END ACTION
 	//////////////////////////////////////////////////////////////////
 	// No need to reset the timer Chanels: CHIE ist deactivated in the corresponding ISR (see FTM0.c)
 
-	waitMs((MOTOR_PULSE_NS/1000)*100);	// Wait 100 Pulse-width for last Pulse to finish
-	FTM0->MOD = 0x0000;
+	waitMs((MOTOR_PULSE_US/1000)*1000);	// Wait 100 Pulse-width for last Pulse to finish
+
 	resetMoveTimers();					// RESET Global Variables
 	ftm0StopClk();						// Stop CLK and Prescaler (All Channels)
 	return 1;							// SUCCESS
@@ -287,7 +290,7 @@ int moveRotation(uint32_t RotSteps){
 		if(MotorRot_Step_Curr>=Steps_Abs){break;}
 	}
 
-	waitMs((MOTOR_PULSE_NS/1000)*100);	// Wait 100 Pulse-width for last Pulse to finish
+	waitMs((MOTOR_PULSE_US/1000)*1000);	// Wait 100 Pulse-width for last Pulse to finish
 	resetRotTimers();				// RESET Global Variables
 	ftm0StopClk();				// Stop CLK and Prescaler (All Channels)return 1;
 	return 1;
@@ -369,10 +372,14 @@ int32_t setTimerValues(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 			totalTicksPauseM1 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot1);
 			tmp_M1_Pause = totalTicksPauseM1 / Mot1;
 			errorStepperM1 = totalTicks - ((tmp_M1_Pause +MOTOR_PULSE_MOD_TICK)*Mot1);
-			Motor1_Step_Corrector[0] = (Mot1/errorStepperM1)+1;				// Round up to omit overshoot
-			for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
-				errorStepperM1= errorStepperM1 -(1/Motor1_Step_Corrector[i])*Mot1;	// second correction
-				Motor1_Step_Corrector[i+1]=Mot1/errorStepperM1;
+			if(errorStepperM1=0){
+				Motor1_Step_Corrector[0] = (Mot1/errorStepperM1)+1;				// Round up to omit overshoot
+				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
+					if((errorStepperM1>0)&&(Motor1_Step_Corrector[i]>0)){
+						errorStepperM1= errorStepperM1 -(1.0/(double)Motor1_Step_Corrector[i])*Mot1;	// second correction
+						Motor1_Step_Corrector[i+1]=Mot1/errorStepperM1;
+					}
+				}
 			}
 		}
 		if(Mot1==0){tmp_M1_Pause =0;}
@@ -381,10 +388,14 @@ int32_t setTimerValues(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 			totalTicksPauseM2 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot2);
 			tmp_M2_Pause = totalTicksPauseM2 / Mot2;
 			errorStepperM2 = totalTicks - ((tmp_M2_Pause +MOTOR_PULSE_MOD_TICK)*Mot2);
-			Motor2_Step_Corrector[0] = (Mot2/errorStepperM2)+1;				// Round up to omit overshoot
-			for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
-				errorStepperM2= errorStepperM2 -(1/Motor2_Step_Corrector[i])*Mot2;	// second correction
-				Motor2_Step_Corrector[i+1]=Mot2/errorStepperM2;
+			if(errorStepperM2>0){
+				Motor2_Step_Corrector[0] = (Mot2/errorStepperM2)+1;				// Round up to omit overshoot
+				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
+					if((errorStepperM2>0)&&(Motor2_Step_Corrector[i]>0)){
+						errorStepperM2= errorStepperM2 -(1.0/(double)Motor2_Step_Corrector[i])*Mot2;	// second correction
+						Motor2_Step_Corrector[i+1]=Mot2/errorStepperM2;
+					}
+				}
 			}
 		}
 		if(Mot2==0){tmp_M2_Pause =0;}
@@ -393,10 +404,14 @@ int32_t setTimerValues(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 			totalTicksPauseM3 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot3);
 			tmp_M3_Pause = totalTicksPauseM3 / Mot3;
 			errorStepperM3 = totalTicks - ((tmp_M3_Pause +MOTOR_PULSE_MOD_TICK)*Mot3);
-			Motor3_Step_Corrector[0] = (Mot3/errorStepperM3)+1;				// Round up to omit overshoot
-			for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
-				errorStepperM3= errorStepperM3 -(1/Motor3_Step_Corrector[i])*Mot3;	// second correction
-				Motor3_Step_Corrector[i+1]=Mot3/errorStepperM3;
+			if(errorStepperM3>=0){
+				Motor3_Step_Corrector[0] = (Mot3/errorStepperM3)+1;				// Round up to omit overshoot
+				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
+					if((errorStepperM3>0)&&(Motor3_Step_Corrector[i]>0)){
+						errorStepperM3= errorStepperM3 -(1.0/(double)Motor3_Step_Corrector[i])*Mot3;	// second correction
+					Motor3_Step_Corrector[i+1]=Mot3/errorStepperM3;
+					}
+				}
 			}
 		}
 		if(Mot3==0){tmp_M3_Pause =0;}

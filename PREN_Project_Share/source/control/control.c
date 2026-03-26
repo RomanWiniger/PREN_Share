@@ -23,9 +23,9 @@ int32_t Motor3_Step_OF_Curr=0;	// Current Amount of Overflows 0xFFFF
 int16_t Motor1_Pause = 0;
 int16_t Motor2_Pause = 0;
 int16_t Motor3_Pause = 0;
-int32_t Motor1_Step_Corrector[]={0}; 	// if Current Step mod = 0: Add one Tick to Stepp
-int32_t Motor2_Step_Corrector[]={0}; 	// if Current Step mod = 0: Add one Tick to Stepp
-int32_t Motor3_Step_Corrector[]={0}; 	// if Current Step mod = 0: Add one Tick to Stepp
+int32_t Motor1_Step_Corrector[]={0,0,0,0,0,0,0,0,0,0,0}; 	// if Current Step mod = 0: Add one Tick to Stepp
+int32_t Motor2_Step_Corrector[]={0,0,0,0,0,0,0,0,0,0,0}; 	// if Current Step mod = 0: Add one Tick to Stepp
+int32_t Motor3_Step_Corrector[]={0,0,0,0,0,0,0,0,0,0,0}; 	// if Current Step mod = 0: Add one Tick to Stepp
 int32_t M1_Last_Step=0;//1950 = 1s
 int32_t M2_Last_Step=0; //1950 = 1s
 int32_t M3_Last_Step=0; //1950 = 1s

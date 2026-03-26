@@ -1,6 +1,6 @@
 ../source/control/motor/motor.c:29:6:motorInit	8	static
 ../source/control/motor/motor.c:98:5:moveWay	48	static
-../source/control/motor/motor.c:227:5:moveRotation	24	static
-../source/control/motor/motor.c:297:6:resetMoveTimers	8	static
-../source/control/motor/motor.c:309:6:resetRotTimers	8	static
-../source/control/motor/motor.c:317:9:setTimerValues	328	static
+../source/control/motor/motor.c:230:5:moveRotation	24	static
+../source/control/motor/motor.c:300:6:resetMoveTimers	8	static
+../source/control/motor/motor.c:312:6:resetRotTimers	8	static
+../source/control/motor/motor.c:320:9:setTimerValues	360	static

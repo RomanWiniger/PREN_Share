@@ -5,11 +5,11 @@
 #include <stdbool.h>
 
 #define DEBUG_MODE			1
-#define TODO					1
+#define TODO				1
 
 
 #define CLK_SRC_GLOBAL		1
-#define PS_GLOBAL			3
+#define PS_GLOBAL			4
 #define TIMER_MODULO_HEX	(0xFFFF)
 #define TIMER_MODULO_INT	(65535)
 
@@ -25,21 +25,21 @@
 #endif
 
 #if PS_GLOBAL == 0
-	#define TIMER_CLK_SCAL		(TIMER_CLK)
+	#define TIMER_CLK_SCAL		((double)TIMER_CLK)
 #elif PS_GLOBAL == 1
-	#define TIMER_CLK_SCAL		(TIMER_CLK/2)
+	#define TIMER_CLK_SCAL		((double)TIMER_CLK/2)
 #elif PS_GLOBAL == 2
-	#define TIMER_CLK_SCAL		(TIMER_CLK/4)
+	#define TIMER_CLK_SCAL		((double)TIMER_CLK/4)
 #elif PS_GLOBAL == 3
-	#define TIMER_CLK_SCAL		(TIMER_CLK/8)
+	#define TIMER_CLK_SCAL		((double)TIMER_CLK/8)
 #elif PS_GLOBAL == 4
-	#define TIMER_CLK_SCAL		(TIMER_CLK/16)
+	#define TIMER_CLK_SCAL		((double)TIMER_CLK/16)
 #elif PS_GLOBAL == 5
-	#define TIMER_CLK_SCAL		(TIMER_CLK/32)
+	#define TIMER_CLK_SCAL		((double)TIMER_CLK/32)
 #elif PS_GLOBAL == 6
-	#define TIMER_CLK_SCAL		(TIMER_CLK/64)
+	#define TIMER_CLK_SCAL		((double)TIMER_CLK/64)
 #elif PS_GLOBAL == 7
-	#define TIMER_CLK_SCAL		(TIMER_CLK/128)
+	#define TIMER_CLK_SCAL		((double)TIMER_CLK/128)
 #endif
 
 #define TIMER_CLK_SCAL_MHZ		(TIMER_CLK_SCAL/1000000)
@@ -55,16 +55,15 @@
 // Motor
 
 //Set Overall Parameters
-#define MOTOR_PULSE_NS			10000	//Start Pulse to End Pulse
-#define MIN_STEP_DISTANCE_NS	10000	//End Pulse to Start Pulse
+#define MOTOR_PULSE_US			300		//Start Pulse to End Pulse
+#define MIN_STEP_DISTANCE_US	300		//End Pulse to Start Pulse
 #define FIRST_PULSE_START_MOD	1000	//Start first Pulse at this Modulo Value of the Channel
 
-#define TIME_PER_MOD_TICK_NS	(1000/TIMER_CLK_SCAL_MHZ)
-#define MOTOR_PULSE_MOD_TICK	(MOTOR_PULSE_NS/TIME_PER_MOD_TICK_NS)
-#define MOTOR_MINPAUSE_MOD_TICK	((MIN_STEP_DISTANCE_NS)/TIME_PER_MOD_TICK_NS)
-//#define MOTOR_PULSE			((MOTOR_PULSE_US * TIMER_CLK_SCAL) / 10000)
+#define TIME_PER_MOD_TICK_US	((double)1/(double)TIMER_CLK_SCAL_MHZ)
+#define MOTOR_PULSE_MOD_TICK	((int16_t)(MOTOR_PULSE_US/TIME_PER_MOD_TICK_US))
+#define MOTOR_MINPAUSE_MOD_TICK	((int16_t)((MIN_STEP_DISTANCE_US)/TIME_PER_MOD_TICK_US))
 
-#define NUM_CORRECTOR_LOOPS		2
+#define NUM_CORRECTOR_LOOPS		10
 
 extern bool M1_Step;
 extern bool M2_Step;
