@@ -7,7 +7,12 @@
 #include <Stdbool.h>
 #include "globals.h"
 
+void clkGating(void); // GPIO Ports A...E
 
+
+//////////////////////////////////////////////////////
+// Initialize Global Variables
+//////////////////////////////////////////////////////
 int32_t Motor1_Step_Curr=0;
 int32_t Motor2_Step_Curr=0;
 int32_t Motor3_Step_Curr=0;
@@ -19,12 +24,15 @@ int32_t MotorRot_Step_Max=0; //1950 = 1s
 int32_t Motor1_Step_OF=0;	// Amount of Overflows 0xFFFF
 int32_t Motor2_Step_OF=0;	// Amount of Overflows 0xFFFF
 int32_t Motor3_Step_OF=0;	// Amount of Overflows 0xFFFF
+int32_t MotorRot_Step_OF=0;	// Amount of Overflows 0xFFFF
 int32_t Motor1_Step_OF_Curr=0;	// Current Amount of Overflows 0xFFFF
 int32_t Motor2_Step_OF_Curr=0;	// Current Amount of Overflows 0xFFFF
 int32_t Motor3_Step_OF_Curr=0;	// Current Amount of Overflows 0xFFFF
-int16_t Motor1_Pause = 0;
-int16_t Motor2_Pause = 0;
-int16_t Motor3_Pause = 0;
+int32_t MotorRot_Step_OF_Curr=0;	// Current Amount of Overflows 0xFFFF
+uint16_t Motor1_Pause = 0;
+uint16_t Motor2_Pause = 0;
+uint16_t Motor3_Pause = 0;
+uint16_t MotorRot_Pause = 0;
 int32_t Motor1_Step_Corrector[NUM_CORRECTOR_LOOPS]={0}; 	// if Current Step mod = 0: Add one Tick to Stepp
 int32_t Motor2_Step_Corrector[NUM_CORRECTOR_LOOPS]={0}; 	// if Current Step mod = 0: Add one Tick to Stepp
 int32_t Motor3_Step_Corrector[NUM_CORRECTOR_LOOPS]={0}; 	// if Current Step mod = 0: Add one Tick to Stepp
@@ -44,9 +52,10 @@ bool MR_Step=false;
 
 void controlInit(){
 
-	waitInit();
-	motorInit();
-	coilInit();
+	waitInit();		// Init for waitMs()-Function
+	clkGating();	// GPIO Ports A...E
+	motorInit();	// Pins for Stepper Motors
+	coilInit();		// Pins for Coil
 
 }
 
@@ -69,4 +78,17 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 		moveWay(M1_Last_Step,M2_Last_Step,M3_Last_Step);
 		moveRotation(MR_Last_Step);
 	}
+}
+
+
+void clkGating(void){
+	//////////////////////////////////////////////////////
+	// Pin Muxing / Clockgateing GPIO
+	//////////////////////////////////////////////////////
+
+	 SIM->SCGC5|=SIM_SCGC5_PORTA_MASK;
+	 SIM->SCGC5|=SIM_SCGC5_PORTB_MASK;
+	 SIM->SCGC5|=SIM_SCGC5_PORTC_MASK;
+	 SIM->SCGC5|=SIM_SCGC5_PORTD_MASK;
+	 SIM->SCGC5|=SIM_SCGC5_PORTE_MASK;
 }

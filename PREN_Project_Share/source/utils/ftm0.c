@@ -122,7 +122,7 @@ void FTM0CH0_IRQHandler(void){
 
 void FTM0CH1_IRQHandler(void){
 	FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
-	// Do not manipulate!!!!!!
+													// Do not manipulate!!!!!!
 
 	// If Mx_Step is false: 	Output was high before
 		if (MOTOR1_STEP_STATUS()){
@@ -160,11 +160,13 @@ void FTM0CH1_IRQHandler(void){
 			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
+
 }
 
 void FTM0CH2_IRQHandler(void){
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
+	RES1_GPIO_HIGH();
 	// If Mx_Step is true: 	Output was high before
 		if (MOTOR2_STEP_STATUS()){
 			MOTOR2_STEP_GPIO_LOW();
@@ -201,6 +203,7 @@ void FTM0CH2_IRQHandler(void){
 			Motor2_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
+		RES1_GPIO_LOW();
 }
 
 void FTM0CH4_IRQHandler(void){

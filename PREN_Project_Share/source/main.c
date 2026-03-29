@@ -35,14 +35,24 @@ int main(void)
   commandInit();
   controlInit();
 
-  MOTOR1_STEP_GPIO();
-
 #if DEBUG_MODE
 
+  RES1_MUX_GPIO();
+  RES1_SET_OUTPUT();
+  RES1_GPIO_HIGH();
+
+  while(true){
+	  moveWay(-300,3,0);
+	  moveWay(251,1,0);
+	  moveWay(251,3011,0);
+	  moveWay(10,50,0);
+	  moveWay(50,10,0);
+  }
+	  /*
   moveWay(300,500,800);
   moveWay(-3000,-1000,1067);
   moveWay(120,456,-1000);
-
+*/
   //BitMonitor PORTA
   PORTA->PCR;
   GPIOA->PDDR;
