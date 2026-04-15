@@ -43,7 +43,7 @@ void termWriteNum16s(int16_t value);
 
 void termWriteLine(const char *str);
 void termDoWork(void);
-void termInit(uint16_t baudrate);
+void termInit(uint32_t baudrate);
 void commandInit();
 
 

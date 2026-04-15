@@ -16,6 +16,7 @@
 #include "ftm0.h"
 #include "globals.h"
 #include "wait.h"
+#include "calculation.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -26,7 +27,7 @@ void resetRotTimers(void);
 void initGlobalsMove(void);
 void initGlobalsRot(void);
 
-bool setTimerValues(int32_t,int32_t,int32_t);
+int32_t setTimerValues(int32_t,int32_t,int32_t);
 
 
 void motorInit(void){
@@ -88,7 +89,6 @@ void motorInit(void){
 		MOTOR_EN_OUTPUT();
 #endif
 
-
 }
 
 int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
@@ -99,6 +99,19 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	bool mot1_Dir = FWD;
 	bool mot2_Dir = FWD;
 	bool mot3_Dir = FWD;
+	int32_t mostMotor = 0;
+	int32_t tmp_steps = 0;
+	int16_t ramp_mode = 0;
+
+	//////////////////////////////////////////////////////////////////
+	///  Init Ramp Mode
+	//////////////////////////////////////////////////////////////////
+#if RAMP_MODE_TWOSTEP
+	Ramp_twostep = true;
+#endif
+#if RAMP_MODE_PREMIUM
+	Ramping_Premium = true;
+#endif
 
 	//////////////////////////////////////////////////////////////////
 	///  GET DIRECTION
@@ -140,9 +153,9 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 
 	// Has to be a minimal Time in advance of the Direction Setting
 	#if ENABLE_EN
-		if (mot1_Abs>0){MOTOR1_EN_ENABLE();}else{MOTOR1_EN_DISABLE();}
-		if (mot2_Abs>0){MOTOR2_EN_ENABLE();}else{MOTOR2_EN_DISABLE();}
-		if (mot3_Abs>0){MOTOR3_EN_ENABLE();}else{MOTOR3_EN_DISABLE();}
+		MOTOR1_EN_ENABLE();
+		MOTOR2_EN_ENABLE();
+		MOTOR3_EN_ENABLE();
 
 	// Minimal Time between setting of ENABLE and Setting DIR
 	waitMs(ENABLE_MIN_DELAY_TIME_MS);
@@ -165,8 +178,8 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	///  SET TIMER VALUES
 	//////////////////////////////////////////////////////////////////
 
-	setTimerValues(mot1_Abs,mot2_Abs,mot3_Abs);		//Set timer Values (Global)
-
+	mostMotor = calcPulsePause(mot1_Abs,mot2_Abs,mot3_Abs);		//Set timer Values (Global)
+	ftm0StopClk();
 	FTM0->CNT=0;	// Reset the FTM0-Counter in order to not go go over an unintentional Overflos
 
 	// activate Timer Interrupts (Channels) unless Step number isn't Zero
@@ -181,23 +194,86 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	//////////////////////////////////////////////////////////////////
 	///  START TIMERS
 	//////////////////////////////////////////////////////////////////
+	RES2_GPIO_HIGH(); // Monitoring
+#if RAMP_ACTIVE && RAMP_MODE_PS
+	ftm0StartClk(CLK_SRC_GLOBAL,(PS_GLOBAL+4));
+#else
+	ftm0StartClk((CLK_SRC_GLOBAL),PS_GLOBAL);
+#endif
+	ftm0EnableIRQ();
+	RES2_GPIO_LOW(); // Monitoring ISR-Time
 
-	ftm0StartClk(CLK_SRC_GLOBAL,PS_GLOBAL);
-	ftm0StartIRQ();
 
 
 	//////////////////////////////////////////////////////////////////
-	///  CHECK STEPS
+	///  CHECK STEPS (
 	//////////////////////////////////////////////////////////////////
+
+	// All Counters must reach Max Steps, and Innterrupts must be disabled
+	// Interrupt disabeling is done in the ISR in the corresponding Channel
 
 	while (true){
-		//if((Motor1_Step_Curr>=mot1_Abs)&&(Motor2_Step_Curr>=mot2_Abs)&&(Motor3_Step_Curr>=mot3_Abs)){
+		if((Motor1_Step_Curr>=mot1_Abs)&&(Motor2_Step_Curr>=mot2_Abs)&&(Motor3_Step_Curr>=mot3_Abs)){
 			if(		((FTM0->CONTROLS[1].CnSC & FTM_CnSC_CHIE(1))==0)&&
 					((FTM0->CONTROLS[2].CnSC & FTM_CnSC_CHIE(1))==0)&&
 					((FTM0->CONTROLS[4].CnSC & FTM_CnSC_CHIE(1))==0)){
 				break;}
+		}
+#if RAMP_MODE_PS
+		if (ramp_mode < 4){
+			if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
+			if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
+			if(mostMotor ==3){tmp_steps = Motor3_Step_Curr;}
 
-		//}
+			if (ramp_mode ==0){
+				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV1)){
+					RES2_GPIO_HIGH();
+					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+3));
+					ftm0ChangePS(CLK_SRC_GLOBAL,(PS_GLOBAL+3));
+					RES2_GPIO_LOW();
+					ramp_mode++;
+				}
+				;
+			}else if(ramp_mode ==1){
+				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV2)){
+					RES2_GPIO_HIGH();
+					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+2));
+					ftm0ChangePS(CLK_SRC_GLOBAL,(PS_GLOBAL+2));
+					RES2_GPIO_LOW();
+					ramp_mode++;
+				}
+				;
+			}else if(ramp_mode ==2){
+				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV3)){
+					RES2_GPIO_HIGH();
+					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+1));
+					ftm0ChangePS(CLK_SRC_GLOBAL, (PS_GLOBAL+1));
+					RES2_GPIO_LOW();
+					ramp_mode++;
+				}
+				;
+			}else if(ramp_mode ==3){
+				if (tmp_steps >=(RAMP_NUMB_STEPS)){
+					RES2_GPIO_HIGH();
+					ftm0ChangePS(CLK_SRC_GLOBAL,PS_GLOBAL);
+					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL));
+					RES2_GPIO_LOW();
+					ramp_mode++;
+				}
+			}
+		}
+#elif RAMP_MODE_NSTEP
+		if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
+		if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
+		if(mostMotor ==3){tmp_steps = Motor3_Step_Curr;}
+		if(tmp_steps>=RAMP_NUMB_STEPS){Ramp_twostep=false;}
+
+#elif RAMP_MODE_PREMIUM
+		if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
+		if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
+		if(mostMotor ==3){tmp_steps = Motor3_Step_Curr;}
+		if(tmp_steps>=RAMP_NUMB_STEPS){Ramping_Premium=false;}
+#endif
 	}
 	initGlobalsMove();
 
@@ -206,12 +282,14 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	//////////////////////////////////////////////////////////////////
 	// No need to reset the timer Chanels: CHIE ist deactivated in the corresponding ISR (see FTM0.c)
 
-	waitMs((MOTOR_PULSE_US/1000)*1000);	// Wait 100 Pulse-width for last Pulse to finish
+	waitMs(100*MOTOR_PULSE_US/1000);	// Wait 100 Pulse-width for last Pulse to finish
 
 	resetMoveTimers();					// RESET Global Variables
 	ftm0StopClk();						// Stop CLK and Prescaler (All Channels)
 	return 1;							// SUCCESS
-}
+
+			}
+
 
 int moveRotation(uint32_t RotSteps){
 
@@ -269,7 +347,7 @@ int moveRotation(uint32_t RotSteps){
 
 
 	ftm0StartClk(CLK_SRC_GLOBAL,PS_GLOBAL);
-	ftm0StartIRQ();
+	ftm0EnableIRQ();
 
 	//Wait forever until Steps are reachend
 	while (true){
@@ -304,184 +382,6 @@ void resetRotTimers(void){
 }
 
 
-bool setTimerValues(int32_t Mot1,int32_t Mot2, int32_t Mot3){
-	uint32_t mostMotor;
-	uint64_t totalTicks;
-	uint64_t totalTicksPauseM1;
-	uint64_t totalTicksPauseM2;
-	uint64_t totalTicksPauseM3;
-	uint32_t errorStepperM1;
-	uint32_t errorStepperM2;
-	uint32_t errorStepperM3;
-	uint64_t tmp_M1_Pause;
-	uint64_t tmp_M2_Pause;
-	uint64_t tmp_M3_Pause;
-	uint64_t tmp_M1_Pause_init;		// Tick Value for the FIRST Pause
-	uint64_t tmp_M2_Pause_init;		// Tick Value for the FIRST Pause
-	uint64_t tmp_M3_Pause_init;		// Tick Value for the FIRST Pause
-	uint32_t tmp_M1_OF_CNT=0;	// OverFlow Counter
-	uint32_t tmp_M2_OF_CNT=0; // OverFlow Counter
-	uint32_t tmp_M3_OF_CNT=0; // OverFlow Counter
-
-	//////////////////////////////////////////////////////////////////
-	///  FIND MOTOR WITH MOST STEPS
-	//////////////////////////////////////////////////////////////////
-		if (Mot1>=Mot2 && Mot1>=Mot3){
-			mostMotor=1;
-			tmp_M1_Pause = MOTOR_MINPAUSE_MOD_TICK;
-			totalTicks=((int64_t)tmp_M1_Pause +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot1;
-
-		}else{
-			if (Mot2>=Mot1 && Mot2>=Mot3){
-				mostMotor=2;
-				tmp_M2_Pause = MOTOR_MINPAUSE_MOD_TICK;
-				totalTicks=((int64_t)MOTOR_MINPAUSE_MOD_TICK +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot2;
-			}else{
-				if (Mot3>=Mot2 && Mot3>=Mot1){
-						mostMotor=3;
-						tmp_M3_Pause = MOTOR_MINPAUSE_MOD_TICK;
-						totalTicks=((int64_t)MOTOR_MINPAUSE_MOD_TICK +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot3;
-				}else{
-					return false; // ERROR
-				}
-			}
-		}
-
-		//////////////////////////////////////////////////////////////////
-		///  TICK NUMBER FOR PAUSE BETWENN PULSES
-		//////////////////////////////////////////////////////////////////
-
-		if (mostMotor != 1 && Mot1!=0){
-			totalTicksPauseM1 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot1);
-			tmp_M1_Pause = totalTicksPauseM1 / Mot1;
-			errorStepperM1 = totalTicks - ((tmp_M1_Pause +MOTOR_PULSE_MOD_TICK)*Mot1);
-			if(errorStepperM1>0){
-				Motor1_Step_Corrector[0] = (Mot1/errorStepperM1)+1;				// Round up to omit overshoot
-				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
-					if((errorStepperM1>0)&&(Motor1_Step_Corrector[i]>0)){
-						errorStepperM1= errorStepperM1 -(1.0/(double)Motor1_Step_Corrector[i])*Mot1;	// second correction
-						Motor1_Step_Corrector[i+1]=Mot1/errorStepperM1;
-					}
-				}
-			}
-		}
-		if(Mot1==0){tmp_M1_Pause =0;}
-
-		if (mostMotor != 2 && Mot2!=0){
-			totalTicksPauseM2 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot2);
-			tmp_M2_Pause = totalTicksPauseM2 / Mot2;
-			errorStepperM2 = totalTicks - ((tmp_M2_Pause +MOTOR_PULSE_MOD_TICK)*Mot2);
-			if(errorStepperM2>0){
-				Motor2_Step_Corrector[0] = (Mot2/errorStepperM2)+1;				// Round up to omit overshoot
-				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
-					if((errorStepperM2>0)&&(Motor2_Step_Corrector[i]>0)){
-						errorStepperM2= errorStepperM2 -(1.0/(double)Motor2_Step_Corrector[i])*Mot2;	// second correction
-						Motor2_Step_Corrector[i+1]=Mot2/errorStepperM2;
-					}
-				}
-			}
-		}
-		if(Mot2==0){tmp_M2_Pause =0;}
-
-		if (mostMotor != 3 && Mot3!=0){
-			totalTicksPauseM3 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot3);
-			tmp_M3_Pause = totalTicksPauseM3 / Mot3;
-			errorStepperM3 = totalTicks - ((tmp_M3_Pause +MOTOR_PULSE_MOD_TICK)*Mot3);
-			if(errorStepperM3>0){
-				Motor3_Step_Corrector[0] = (Mot3/errorStepperM3)+1;				// Round up to omit overshoot
-				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
-					if((errorStepperM3>0)&&(Motor3_Step_Corrector[i]>0)){
-						errorStepperM3= errorStepperM3 -(1.0/(double)Motor3_Step_Corrector[i])*Mot3;	// second correction
-					Motor3_Step_Corrector[i+1]=Mot3/errorStepperM3;
-					}
-				}
-			}
-		}
-		if(Mot3==0){tmp_M3_Pause =0;}
-
-#if OVERFLOW_HANDLING
-		//////////////////////////////////////////////////////////////////
-		///  OVERFLOW HANDLING
-		//////////////////////////////////////////////////////////////////
-
-		do{		// If Modulo Overflow: Count how many INT16_MAX Overflows occur
-			if (tmp_M1_Pause>=UINT16_MAX){
-				tmp_M1_Pause=(tmp_M1_Pause-UINT16_MAX);
-				tmp_M1_OF_CNT +=1;
-			}
-			if (tmp_M2_Pause>=UINT16_MAX){
-				tmp_M2_Pause=(tmp_M2_Pause-UINT16_MAX);
-				tmp_M2_OF_CNT +=1;
-			}
-			if (tmp_M3_Pause>=UINT16_MAX){
-				tmp_M3_Pause=(tmp_M3_Pause-UINT16_MAX);
-				tmp_M3_OF_CNT +=1;
-			}
-		}while((tmp_M1_Pause>=UINT16_MAX || tmp_M2_Pause>=UINT16_MAX||tmp_M3_Pause>=UINT16_MAX));
-#else
-		if((tmp_M1_Pause>=INT16_MAX || tmp_M2_Pause>=INT16_MAX||tmp_M3_Pause>=INT16_MAX)){
-			printf("Error\n");
-		};
-#endif
-
-
-		//////////////////////////////////////////////////////////////////
-		///  CALCULTATE INITIAL PAUSE TICKS
-		//////////////////////////////////////////////////////////////////
-
-		if((tmp_M1_OF_CNT%2 == 0)||(tmp_M1_OF_CNT==0)){ 	// Even Overflow Counter
-			tmp_M1_Pause_init = tmp_M1_Pause/2;
-		}else{						// Odd Overflow Counter
-			tmp_M1_Pause_init = (UINT16_MAX/2)+(tmp_M1_Pause/2);
-		}
-
-		if((tmp_M2_OF_CNT%2 == 0)||(tmp_M2_OF_CNT==0)){ 	// Even Overflow Counter
-			tmp_M2_Pause_init = tmp_M2_Pause/2;
-		}else{						// Odd Overflow Counter
-			tmp_M2_Pause_init = (UINT16_MAX/2)+(tmp_M2_Pause/2);
-		}
-
-		if((tmp_M3_OF_CNT%2 == 0)||(tmp_M3_OF_CNT==0)){ 	// Even Overflow Counter
-			tmp_M3_Pause_init = tmp_M3_Pause/2;
-		}else{						// Odd Overflow Counter
-			tmp_M3_Pause_init = (UINT16_MAX/2)+(tmp_M3_Pause/2);
-		}
-
-
-		//////////////////////////////////////////////////////////////////
-		///  SET INITIAL CHANNEL VALUES
-		//////////////////////////////////////////////////////////////////
-
-		// Set Initial Pause Value
-		if(Mot1 !=0){
-			if(mostMotor==1){FTM0->CONTROLS[MOTOR1_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR1_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M1_Pause_init);}
-		}
-		if(Mot1 !=0){
-			if(mostMotor==2){FTM0->CONTROLS[MOTOR2_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR2_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M2_Pause_init);}
-		}
-		if(Mot3!=0){
-			if(mostMotor==3){FTM0->CONTROLS[MOTOR3_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR3_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M3_Pause_init);}
-		}
-
-		//////////////////////////////////////////////////////////////////
-		///  SET OUTPUTS TO GLOBALS
-		//////////////////////////////////////////////////////////////////
-
-		Motor1_Step_OF = tmp_M1_OF_CNT;
-		Motor2_Step_OF = tmp_M2_OF_CNT;
-		Motor3_Step_OF = tmp_M3_OF_CNT;
-
-		Motor1_Step_OF_Curr = tmp_M1_OF_CNT/2;	// set Initial Pause to half (in case uneven -> see tmp_Mx_Pause_init)
-		Motor2_Step_OF_Curr = tmp_M2_OF_CNT/2;	// set Initial Pause to half (in case uneven -> see tmp_Mx_Pause_init)
-		Motor3_Step_OF_Curr = tmp_M3_OF_CNT/2;	// set Initial Pause to half (in case uneven -> see tmp_Mx_Pause_init)
-
-		Motor1_Pause = (uint16_t)tmp_M1_Pause;
-		Motor2_Pause = (uint16_t)tmp_M2_Pause;
-		Motor3_Pause = (uint16_t)tmp_M3_Pause;
-
-		return true;	// no Error
-}
-
 void initGlobalsMove(void){
 	Motor1_Step_OF =0;
 	Motor2_Step_OF =0;
@@ -499,9 +399,9 @@ void initGlobalsMove(void){
 	for (int i = 0; i < NUM_CORRECTOR_LOOPS; i++) { //
 	    Motor3_Step_Corrector[i] = 0;
 	}
-};
+}
 
 void initGlobalsRot(void){
 	MotorRot_Step_OF =0;
 	MotorRot_Step_OF_Curr =0;
-};
+}

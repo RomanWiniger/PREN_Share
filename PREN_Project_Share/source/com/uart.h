@@ -32,7 +32,7 @@ char uart2ReadChar(void);
 uint16_t uart2ReadLine(char *str, uint16_t length);
 bool uart2HasLineReceived(void);
 uint16_t uart2RxBufCount(void);
-void uart2Init(uint16_t baudrate);
+void uart2Init(uint32_t baudrate);
 
 
 #endif /* SOURCES_UART_H_ */

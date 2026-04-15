@@ -227,7 +227,7 @@ int _read(int fd, char *buf, int count)
 }
 #endif
 
-void uart2Init(uint16_t baudrate)
+void uart2Init(uint32_t baudrate)
 {
   txBufReadPos = txBufWritePos = txBufCount = 0;
   rxBufReadPos = rxBufWritePos = rxBufCount = 0;

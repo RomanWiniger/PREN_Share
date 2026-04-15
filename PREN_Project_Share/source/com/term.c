@@ -200,7 +200,7 @@ void termDoWork(void)
  * @param[in] baudrate
  *   the desired baudrate (for example: 9600, 19200, 57600...)
  */
-void termInit(uint16_t baudrate)
+void termInit(uint32_t baudrate)
 {
 
     // initialize uart2 only if the uart is enabled

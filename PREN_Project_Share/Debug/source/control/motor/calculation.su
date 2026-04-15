@@ -1,0 +1,4 @@
+../source/control/motor/calculation.c:28:9:calcPulsePause	408	static
+../source/control/motor/calculation.c:564:13:overflowCounter_16bit	32	static
+../source/control/motor/calculation.c:583:10:scalePercent	48	static
+../source/control/motor/calculation.c:599:6:calcEndPoint	88	static

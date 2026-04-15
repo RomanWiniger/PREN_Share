@@ -31,7 +31,7 @@
  */
 int main(void)
 {
-  termInit(57600);
+  termInit(115200);
   commandInit();
   controlInit();
 
@@ -40,13 +40,24 @@ int main(void)
   RES1_MUX_GPIO();
   RES1_SET_OUTPUT();
   RES1_GPIO_HIGH();
+  RES2_MUX_GPIO();
+  RES2_SET_OUTPUT();
 
+uint64_t cycles = 0;
   while(true){
-	  moveWay(-300,3,0);
-	  moveWay(251,1,0);
-	  moveWay(251,3011,0);
-	  moveWay(10,50,0);
-	  moveWay(50,10,0);
+	  moveWay(-600,300,326);
+	  moveWay(2510,10,45);
+	  moveWay(2510,30110,-20000);
+	  moveWay(-100,500,-456);
+	  moveWay(1000,5000,-456);
+	  moveWay(-520,550,-456);
+	  moveWay(-3324,3145,-3242);
+	  moveWay(-100,500,-456);
+	  moveWay(500,100,0);
+	  moveWay(0,1500,123);
+	  moveWay(500,0,600);
+	  moveWay(50000,-49080,51100);
+	  cycles++;
   }
 	  /*
   moveWay(300,500,800);

@@ -32,6 +32,64 @@ int32_t MotorRot_Step_OF_Curr=0;	// Current Amount of Overflows 0xFFFF
 uint16_t Motor1_Pause = 0;
 uint16_t Motor2_Pause = 0;
 uint16_t Motor3_Pause = 0;
+uint16_t M1_Pause_min=0;
+uint16_t M2_Pause_min=0;
+uint16_t M3_Pause_min=0;
+uint16_t M1_Pause_Ramp=0;
+uint16_t M2_Pause_Ramp=0;
+uint16_t M3_Pause_Ramp=0;
+double Ramp_Factor_current =1;
+
+#if RAMP_MODE_TWOSTEP
+	bool Ramp_twostep = false;
+	int32_t M1_Step_Ramp_OF;	// Amount of Overflows 0xFFFF
+	int32_t M2_Step_Ramp_OF;	// Amount of Overflows 0xFFFF
+	int32_t M3_Step_Ramp_OF;	// Amount of Overflows 0xFFFF
+	int32_t M1_Step_Ramp_OF_Curr;	// Current Amount of Overflows 0xFFFF
+	int32_t M2_Step_Ramp_OF_Curr;	// Current Amount of Overflows 0xFFFF
+	int32_t M3_Step_Ramp_OF_Curr;	// Current Amount of Overflows 0xFFFF
+#endif
+
+#if RAMP_MODE_PREMIUM
+	bool Ramping_Premium = false;
+	int64_t M1_PR_Ramp_TCK_Add=0; // Ticks to Add per Step WHILE RAMPING
+	int64_t M2_PR_Ramp_TCK_Add=0; // Ticks to Add per Step WHILE RAMPING
+	int64_t M3_PR_Ramp_TCK_Add=0; // Ticks to Add per Step WHILE RAMPING
+	int16_t M1_PR_Ramp_Pause[RAMP_NUMB_STEPS]={0}; // Pause Ticks per Step
+	int16_t M2_PR_Ramp_Pause[RAMP_NUMB_STEPS]={0}; // Pause Ticks per Step
+	int16_t M3_PR_Ramp_Pause[RAMP_NUMB_STEPS]={0}; // Pause Ticks per Step
+	int16_t M1_PR_Ramp_OF[RAMP_NUMB_STEPS]={0}; // Overflow Count
+	int16_t M2_PR_Ramp_OF[RAMP_NUMB_STEPS]={0}; // Overflow Count
+	int16_t M3_PR_Ramp_OF[RAMP_NUMB_STEPS]={0}; // Overflow Count
+	int16_t M1_PR_Ramp_OF_Curr=0; // Overflow Count Current
+	int16_t M2_PR_Ramp_OF_Curr=0; // Overflow Count Current
+	int16_t M3_PR_Ramp_OF_Curr=0; // Overflow Count Current
+#endif
+
+#if RAMP_MODE_NSTEP
+	int64_t Ramp_Ticks[RAMP_NSTEPS] = {0};		// Array wirh Ticks per Ramp Step
+	bool Ramp_Start_State[RAMP_NSTEPS] = {false};			//true = Pulse false )
+	bool Ramp_End_State[RAMP_NSTEPS] = {false};			//true = Pulse false )
+	int64_t Tamp_End_Rem_Ticks[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pause_Ticks_Init[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pause_Ticks_Init_OF[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pause_Ticks_Init_OF_Curr[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pause_Ticks[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pause_Ticks_OF[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pause_Ticks_OF_Curr[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pulse_Ticks_Init[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pulse_Ticks_Init_OF[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pulse_Ticks_Init_OF_Curr[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pulse_Ticks[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pulse_Ticks_OF[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Pulse_Ticks_OF_Curr[RAMP_NSTEPS] = {0};			//true = Pulse false )
+#endif
+
+#if DEBUG
+	uint16_t Ramp_CNV_Logger[1000];
+	uint16_t Ramp_Buffer_Index=0;
+#endif
+
 uint16_t MotorRot_Pause = 0;
 int32_t Motor1_Step_Corrector[NUM_CORRECTOR_LOOPS]={0}; 	// if Current Step mod = 0: Add one Tick to Stepp
 int32_t Motor2_Step_Corrector[NUM_CORRECTOR_LOOPS]={0}; 	// if Current Step mod = 0: Add one Tick to Stepp
@@ -69,7 +127,7 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 	//////////////////////////////////////////////////////////////////
 	///  MOVE AND ROTATE
 	//////////////////////////////////////////////////////////////////
-	if (((command.Steps1 > 0)||(command.Steps2 > 0)||(command.Steps3 > 0))&&(command.ErrorHandling==false)){
+	if (((command.Steps1 != 0)||(command.Steps2 != 0)||(command.Steps3 != 0))&&(command.ErrorHandling==false)){
 		moveWay(command.Steps1,command.Steps2,command.Steps3);
 	}else if ((command.StepsRot > 0)&&(command.ErrorHandling==false)){
 		moveRotation(command.StepsRot);

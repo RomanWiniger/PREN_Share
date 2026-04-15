@@ -4,12 +4,15 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../source/control/motor/calculation.c \
 ../source/control/motor/motor.c 
 
 C_DEPS += \
+./source/control/motor/calculation.d \
 ./source/control/motor/motor.d 
 
 OBJS += \
+./source/control/motor/calculation.o \
 ./source/control/motor/motor.o 
 
 
@@ -25,7 +28,7 @@ source/control/motor/%.o: ../source/control/motor/%.c source/control/motor/subdi
 clean: clean-source-2f-control-2f-motor
 
 clean-source-2f-control-2f-motor:
-	-$(RM) ./source/control/motor/motor.d ./source/control/motor/motor.o
+	-$(RM) ./source/control/motor/calculation.d ./source/control/motor/calculation.o ./source/control/motor/motor.d ./source/control/motor/motor.o
 
 .PHONY: clean-source-2f-control-2f-motor
 

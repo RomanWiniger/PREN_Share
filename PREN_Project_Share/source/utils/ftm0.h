@@ -14,12 +14,11 @@
 #ifndef SOURCES_FTM0_H_
 #define SOURCES_FTM0_H_
 
-#define FTM0_CLOCK              250000  // 250 kHz
-
 void ftm0Init(bool mod_max, uint32_t modulo);
 void ftm0StartClk(int CLK_Source, int Prescaler);
+void ftm0ChangePS(int CLK_Source, int Prescaler);
 void ftm0StopClk(void);
-void ftm0StartIRQ();
+void ftm0EnableIRQ();
 void ftm0StopIRQ();
 
 #endif /* SOURCES_FTM0_H_ */
