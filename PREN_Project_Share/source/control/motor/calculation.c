@@ -291,7 +291,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 
 		ramp_tot_ticks = Ramp_Ticks[RAMP_NSTEPS-1];
 
-		for(int i=(RAMP_NSTEPS-2);i=0;i--){
+		for(int i=(RAMP_NSTEPS-2);i>=0;i--){
 
 			Ramp_Ticks[i]=Ramp_Ticks[i+1]+scalePercent(RAMP_NSTEPS_STEPS,RAMP_NSTEPS_STEPS);
 			tmp_m1_pause_ticks[i]=Ramp_M1_Pause_Ticks[i+1]+scalePercent(MOTOR_MINPAUSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
@@ -320,38 +320,38 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		// Set Globals and add Percentage
 
 
-		tmp_m1_pause_ticks[RAMP_NSTEPS-1]=MOTOR_MINPAUSE_MOD_TICK+scalePercent(MOTOR_MINPAUSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
-		tmp_m1_pulse_ticks[RAMP_NSTEPS-1]=MOTOR_PULSE_MOD_TICK+scalePercent(MOTOR_PULSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
-		if (Ramp_M1_Start_State[RAMP_NSTEPS-1]== true){
-			tmp_m1_pause_ticks_init[RAMP_NSTEPS-1] = 0;
-			tmp_m1_pulse_ticks_init[RAMP_NSTEPS-1] = Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS-1]+scalePercent( Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS-1],RAMP_NSTEPS_STEP_TICKS);
+		tmp_m2_pause_ticks[RAMP_NSTEPS-1]=MOTOR_MINPAUSE_MOD_TICK+scalePercent(MOTOR_MINPAUSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
+		tmp_m2_pulse_ticks[RAMP_NSTEPS-1]=MOTOR_PULSE_MOD_TICK+scalePercent(MOTOR_PULSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
+		if (Ramp_M2_Start_State[RAMP_NSTEPS-1]== true){
+			tmp_m2_pause_ticks_init[RAMP_NSTEPS-1] = 0;
+			tmp_m2_pulse_ticks_init[RAMP_NSTEPS-1] = Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS-1]+scalePercent( Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS-1],RAMP_NSTEPS_STEP_TICKS);
 		}else{
-			tmp_m1_pause_ticks_init[RAMP_NSTEPS-1] = Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS-1]+scalePercent( Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS-1],RAMP_NSTEPS_STEP_TICKS);
-			tmp_m1_pulse_ticks_init[RAMP_NSTEPS-1] = 0;
+			tmp_m2_pause_ticks_init[RAMP_NSTEPS-1] = Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS-1]+scalePercent( Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS-1],RAMP_NSTEPS_STEP_TICKS);
+			tmp_m2_pulse_ticks_init[RAMP_NSTEPS-1] = 0;
 		}
 
 		ramp_tot_ticks = Ramp_Ticks[RAMP_NSTEPS-1];
 
-		for(int i=(RAMP_NSTEPS-2);i=0;i--){
+		for(int i=(RAMP_NSTEPS-2);i>=0;i--){
 
 			Ramp_Ticks[i]=Ramp_Ticks[i+1]+scalePercent(RAMP_NSTEPS_STEPS,RAMP_NSTEPS_STEPS);
-			tmp_m1_pause_ticks[i]=Ramp_M2_Pause_Ticks[i+1]+scalePercent(MOTOR_MINPAUSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
-			tmp_m1_pulse_ticks[i]=Ramp_M2_Pulse_Ticks[i+1]+scalePercent(MOTOR_PULSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
+			tmp_m2_pause_ticks[i]=Ramp_M2_Pause_Ticks[i+1]+scalePercent(MOTOR_MINPAUSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
+			tmp_m2_pulse_ticks[i]=Ramp_M2_Pulse_Ticks[i+1]+scalePercent(MOTOR_PULSE_MOD_TICK,RAMP_NSTEPS_STEP_TICKS);
 
-			if (Ramp_M1_Start_State[i]== true){
-				tmp_m1_pause_ticks_init[i] = 0;
-				tmp_m1_pulse_ticks_init[i] = Ramp_M2_End_Rem_Ticks[i]+scalePercent(Ramp_M2_End_Rem_Ticks[i],(RAMP_NSTEPS-i)*RAMP_NSTEPS_STEP_TICKS);
+			if (Ramp_M2_Start_State[i]== true){
+				tmp_m2_pause_ticks_init[i] = 0;
+				tmp_m2_pulse_ticks_init[i] = Ramp_M2_End_Rem_Ticks[i]+scalePercent(Ramp_M2_End_Rem_Ticks[i],(RAMP_NSTEPS-i)*RAMP_NSTEPS_STEP_TICKS);
 			}else{
-				tmp_m1_pause_ticks_init[i] = Ramp_M2_End_Rem_Ticks[i]+scalePercent(Ramp_M2_End_Rem_Ticks[i],(RAMP_NSTEPS-i)*RAMP_NSTEPS_STEP_TICKS);
-				tmp_m1_pulse_ticks_init[i] = 0;
+				tmp_m2_pause_ticks_init[i] = Ramp_M2_End_Rem_Ticks[i]+scalePercent(Ramp_M2_End_Rem_Ticks[i],(RAMP_NSTEPS-i)*RAMP_NSTEPS_STEP_TICKS);
+				tmp_m2_pulse_ticks_init[i] = 0;
 			}
 
 			ramp_tot_ticks +=Ramp_Ticks[i];
 
-			overflowCounter_16bit(tmp_m1_pause_ticks_init[i],&Ramp_M2_Pause_Ticks_Init_OF[i],&Ramp_M2_Pause_Ticks_Init[i]);
-			overflowCounter_16bit(tmp_m1_pause_ticks[i],&Ramp_M2_Pause_Ticks_OF[i],&Ramp_M2_Pause_Ticks[i]);
-			overflowCounter_16bit(tmp_m1_pulse_ticks_init[i],&Ramp_M2_Pulse_Ticks_Init_OF[i],&Ramp_M2_Pulse_Ticks_Init[i]);
-			overflowCounter_16bit(tmp_m1_pulse_ticks[i],&Ramp_M2_Pulse_Ticks_OF[i],&Ramp_M2_Pulse_Ticks[i]);
+			overflowCounter_16bit(tmp_m2_pause_ticks_init[i],&Ramp_M2_Pause_Ticks_Init_OF[i],&Ramp_M2_Pause_Ticks_Init[i]);
+			overflowCounter_16bit(tmp_m2_pause_ticks[i],&Ramp_M2_Pause_Ticks_OF[i],&Ramp_M2_Pause_Ticks[i]);
+			overflowCounter_16bit(tmp_m2_pulse_ticks_init[i],&Ramp_M2_Pulse_Ticks_Init_OF[i],&Ramp_M2_Pulse_Ticks_Init[i]);
+			overflowCounter_16bit(tmp_m2_pulse_ticks[i],&Ramp_M2_Pulse_Ticks_OF[i],&Ramp_M2_Pulse_Ticks[i]);
 		}
 #endif
 
@@ -565,7 +565,7 @@ static void overflowCounter_16bit(uint64_t number, uint16_t* OF_counter, uint16_
 	do{		// If Modulo Overflow: Count how many INT16_MAX Overflows occur
 		if (number>=UINT16_MAX){
 			number=(number-UINT16_MAX);
-			OF_counter+=1;
+			(*OF_counter)+=1;
 		}
 	}while(number>=UINT16_MAX);
 	*modulo = (uint16_t)number;
@@ -582,7 +582,7 @@ static void overflowCounter_16bit(uint64_t number, uint16_t* OF_counter, uint16_
  */
 uint64_t scalePercent(uint64_t value, int32_t percentage){
 	uint64_t result;
-	result=value*(RAMP_NSTEPS_STEP_TICKS)/100;
+	result=value*percentage/100;
 	return result;
 }
 
@@ -611,7 +611,7 @@ void calcEndPoint(uint64_t ticks, bool startState, bool* endState, int64_t* endT
 				*endTicks=MOTOR_MINPAUSE_MOD_TICK- ticks;
 				break;
 			}else{ticks -= MOTOR_MINPAUSE_MOD_TICK;}
-		}while(ticks>=0);
+		}while(ticks>0);
 	}else{
 		do{
 			if(ticks<=MOTOR_MINPAUSE_MOD_TICK){
@@ -626,6 +626,6 @@ void calcEndPoint(uint64_t ticks, bool startState, bool* endState, int64_t* endT
 				break;
 			}else{ticks -= MOTOR_PULSE_MOD_TICK;}
 
-		}while(ticks>=0);
+		}while(ticks>0);
 	}
 }

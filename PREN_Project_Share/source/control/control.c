@@ -134,7 +134,9 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 	}else if (command.ErrorHandling==true){
 		// Use last saved Values but with contrary direction
 		moveWay(M1_Last_Step,M2_Last_Step,M3_Last_Step);
+#if ENABLE_ROT
 		moveRotation(MR_Last_Step);
+#endif
 	}
 }
 

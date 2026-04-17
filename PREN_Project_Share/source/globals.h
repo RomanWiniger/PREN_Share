@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DEBUG_MODE			1
+#define DEBUG_MODE			0
 #define TODO				1
 
 
@@ -55,8 +55,8 @@
 // Motor
 
 //Set Overall Parameters
-#define MOTOR_PULSE_US			10		//Start Pulse to End Pulse
-#define MIN_STEP_DISTANCE_US	10		//End Pulse to Start Pulse
+#define MOTOR_PULSE_US			300		//Start Pulse to End Pulse
+#define MIN_STEP_DISTANCE_US	300		//End Pulse to Start Pulse
 #define RAMP_DISTANCE_FACTOR	10		//*PREMIUM RAMP* *End Pulse to Start Pulse BEGINN LINEAR RAMP (if(<= 1) -> deactivated)
 #define FIRST_PULSE_START_MOD	1	//Start first Pulse at this Modulo Value of the Channel
 

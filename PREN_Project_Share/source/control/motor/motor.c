@@ -169,7 +169,9 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 		if(mot1_Dir){MOTOR1_DIR_FWD();}else{MOTOR1_DIR_REV();}
 		if(mot2_Dir){MOTOR2_DIR_FWD();}else{MOTOR2_DIR_REV();}
 		if(mot3_Dir){MOTOR3_DIR_FWD();}else{MOTOR3_DIR_REV();}
-
+		for(volatile int i = 0; i < 1000; i++){
+		    MOTOR1_EN_ENABLE();
+		}
 	// Minimal Time between setting of DIR and Setting STEP
 	waitMs(DIR_MIN_DELAY_TIME_MS);
 	#endif
@@ -293,6 +295,9 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 
 int moveRotation(uint32_t RotSteps){
 
+#if !ENABLE_ROT
+    return 0;  // früh raus wenn ROT deaktiviert
+#endif
 	uint32_t Steps_Abs = 0;
 	bool Dir = FWD;
 
