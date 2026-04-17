@@ -123,6 +123,7 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 	///  COIL ACTIVATION
 	//////////////////////////////////////////////////////////////////
 	if(command.ActCoil){coil_ctrl(true);}
+	else(coil_ctrl(false));
 
 	//////////////////////////////////////////////////////////////////
 	///  MOVE AND ROTATE

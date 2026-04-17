@@ -17,6 +17,7 @@
 #include "term.h"
 #include "control.h"
 #include "globals.h"
+#include "coil.h"
 
 #include "motor_config.h"
 #if DEBUG_MODE
@@ -45,6 +46,8 @@ int main(void)
 
 uint64_t cycles = 0;
   while(true){
+	  /*
+	   * ABFOLGE DRIN LASSEN
 	  moveWay(4878, 4878, 4878);
 	  moveWay(361, -1670, 2123);
 	  moveWay(2467, 2668, 2320);
@@ -55,6 +58,12 @@ uint64_t cycles = 0;
 	  moveWay(2810, -2366, -2366);
 	  moveWay(-4878, -4878, -4878);
 	  cycles++;
+	  */
+	  while(true){
+		  coil_ctrl(true);
+		  coil_ctrl(false);
+	  }
+
   }
 	  /*
   moveWay(300,500,800);
@@ -65,6 +74,11 @@ uint64_t cycles = 0;
   PORTA->PCR;
   GPIOA->PDDR;
   GPIOA->PDOR;
+
+  //BitMonitor PORTA
+  PORTD->PCR;
+  GPIOD->PDDR;
+  GPIOD->PDOR;
 
   //BitMonitor PORTB
   PORTB->PCR;
