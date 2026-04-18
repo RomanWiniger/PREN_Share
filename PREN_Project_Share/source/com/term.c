@@ -222,7 +222,6 @@ static tError startHandler(const char *args)
 #else
 	commands.Steps1 = strtol(args, &current, 10);//strtol extracts the values
 #endif
-	commands.Steps1 = strtol(args, &current, 10);//strtol extracts the values
 	commands.Steps2 = strtol(current, &current, 10);
 	commands.Steps3 = strtol(current, &current, 10);
 	commands.StepsRot = strtol(current, &current, 10);
