@@ -1,11 +1,12 @@
+#include "globals.h"
 #include "control.h"
 #include "platform.h"
 #include "term.h"
 #include "motor.h"
 #include "coil.h"
+#include "sensor.h"
 #include "wait.h"
 #include <Stdbool.h>
-#include "globals.h"
 
 void clkGating(void); // GPIO Ports A...E
 
@@ -114,6 +115,7 @@ void controlInit(){
 	clkGating();	// GPIO Ports A...E
 	motorInit();	// Pins for Stepper Motors
 	coilInit();		// Pins for Coil
+	sensorInit();		// Pins for Coil
 
 }
 
@@ -127,6 +129,10 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 	//////////////////////////////////////////////////////////////////
 	///  MOVE AND ROTATE
 	//////////////////////////////////////////////////////////////////
+#if COMMAND_BYTE
+	if(command.CMD[0]){moveToInitPos();}
+#endif
+
 	if (((command.Steps1 != 0)||(command.Steps2 != 0)||(command.Steps3 != 0))&&(command.ErrorHandling==false)){
 		moveWay(command.Steps1,command.Steps2,command.Steps3);
 	}else if ((command.StepsRot > 0)&&(command.ErrorHandling==false)){

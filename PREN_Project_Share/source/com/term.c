@@ -216,6 +216,12 @@ static tError startHandler(const char *args)
 	struct ReceivedCommand commands;
 	char* current;
 
+#if COMMAND_BYTE
+	commands.CMD[0] = (bool)strtol(args, &current, 10);//strtol extracts the values
+	commands.Steps1 = strtol(current, &current, 10);//strtol extracts the values
+#else
+	commands.Steps1 = strtol(args, &current, 10);//strtol extracts the values
+#endif
 	commands.Steps1 = strtol(args, &current, 10);//strtol extracts the values
 	commands.Steps2 = strtol(current, &current, 10);
 	commands.Steps3 = strtol(current, &current, 10);

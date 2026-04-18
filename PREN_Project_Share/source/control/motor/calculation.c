@@ -14,12 +14,12 @@
 #include <motor_config.h>
 #include "platform.h"
 #include "ftm0.h"
-#include "globals.h"
 #include "wait.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include "globals.h"
 
 static void overflowCounter_16bit(uint64_t number, uint16_t* OF_counter, uint16_t* modulo);
 void calcEndPoint(uint64_t temp_ticks, bool startState, bool* endState, int64_t* endTicks);
@@ -568,7 +568,7 @@ static void overflowCounter_16bit(uint64_t number, uint16_t* OF_counter, uint16_
 			(*OF_counter)+=1;
 		}
 	}while(number>=UINT16_MAX);
-	*modulo = (uint16_t)number;
+	(*modulo) = (uint16_t)number;
 }
 
 /*

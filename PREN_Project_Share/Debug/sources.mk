@@ -21,6 +21,7 @@ source/com \
 source/control/coil \
 source/control \
 source/control/motor \
+source/control/sensor \
 source \
 source/utils \
 startup \

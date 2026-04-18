@@ -17,10 +17,14 @@
 #include "term.h"
 #include "control.h"
 #include "globals.h"
-
 #include "motor_config.h"
-#if DEBUG_MODE
 
+#if SENSOR_TEST
+#include "sensor.h"
+#include "sensor_config.h"
+#endif
+
+#if DEBUG_MODE
 	#include "motor.h"
 #endif
 
@@ -35,15 +39,18 @@ int main(void)
   commandInit();
   controlInit();
 
-#if DEBUG_MODE
+#if SENSOR_TEST
+  bool sensor1,sensor2,sensor3;
 
-  RES1_MUX_GPIO();
-  RES1_SET_OUTPUT();
-  RES1_GPIO_HIGH();
-  RES2_MUX_GPIO();
-  RES2_SET_OUTPUT();
+  for(;;){
+  	  if(SENSOR1_STATUS()){sensor1=true;}else{{sensor1=false;}}
+  	  if(SENSOR2_STATUS()){sensor2=true;}else{{sensor3=false;}}
+  	  if(SENSOR3_STATUS()){sensor3=true;}else{{sensor3=false;}}
+  }
+#endif
 
-uint64_t cycles = 0;
+#if TEST_SEQUENCE
+  uint64_t cycles = 0;
   while(true){
 	  moveWay(4878, 4878, 4878);
 	  moveWay(361, -1670, 2123);
@@ -56,11 +63,17 @@ uint64_t cycles = 0;
 	  moveWay(-4878, -4878, -4878);
 	  cycles++;
   }
-	  /*
-  moveWay(300,500,800);
-  moveWay(-3000,-1000,1067);
-  moveWay(120,456,-1000);
-*/
+#endif
+
+#if DEBUG_MODE
+  // Initialize Reserve Pins (ISR Monitoring)
+  RES1_MUX_GPIO();
+  RES1_SET_OUTPUT();
+  RES1_GPIO_HIGH();
+  RES2_MUX_GPIO();
+  RES2_SET_OUTPUT();
+
+
   //BitMonitor PORTA
   PORTA->PCR;
   GPIOA->PDDR;
@@ -70,6 +83,16 @@ uint64_t cycles = 0;
   PORTB->PCR;
   GPIOB->PDDR;
   GPIOB->PDOR;
+
+  //BitMonitor PORTC
+  PORTC->PCR;
+  GPIOC->PDDR;
+  GPIOC->PDOR;
+
+  //BitMonitor PORTD
+  PORTD->PCR;
+  GPIOD->PDDR;
+  GPIOD->PDOR;
 
 #else
   while(TRUE)

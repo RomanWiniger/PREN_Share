@@ -11,16 +11,18 @@
  *--------------------------------------------------------------------
 **/
 
-#include <motor_config.h>
+#include "motor_config.h"
 #include "platform.h"
 #include "ftm0.h"
-#include "globals.h"
 #include "wait.h"
 #include "calculation.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include "globals.h"
+#include "sensor_config.h"
+#include "reserve_pin_config.h"
 
 void resetMoveTimers(void);
 void resetRotTimers(void);
@@ -41,9 +43,9 @@ void motorInit(void){
 	// Timers: All timers are Channels of FTM0
 	// Set all Timer Channels to OutputCompare in order to use the Channel-Interrupt
 	// Disable Outputs: These are Muxed as GPIO in order to Handle Overflows
-	FTM0->CONTROLS[MOTOR1_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
-	FTM0->CONTROLS[MOTOR2_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
-	FTM0->CONTROLS[MOTOR3_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
+	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
+	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
+	FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
 
 	#if ENABLE_ROT
 		FTM0->CONTROLS[MOTORROT_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0) ;
@@ -52,15 +54,15 @@ void motorInit(void){
 
 #if ENABLE_STEP
 
-	MOTOR1_STEP_GPIO();
-	MOTOR2_STEP_GPIO();
-	MOTOR3_STEP_GPIO();
+	MOTOR1_STEP_MUX_GPIO();
+	MOTOR2_STEP_MUX_GPIO();
+	MOTOR3_STEP_MUX_GPIO();
 	#if ENABLE_ROT
 		MOTORROT_STEP_FTM();
 	#endif
-	MOTOR1_STEP_GPIO_OUTPUT();
-	MOTOR2_STEP_GPIO_OUTPUT();
-	MOTOR3_STEP_GPIO_OUTPUT();
+	MOTOR1_STEP_SET_OUTPUT();
+	MOTOR2_STEP_SET_OUTPUT();
+	MOTOR3_STEP_SET_OUTPUT();
 #if ENABLE_ROT
 	MOTORROT_STEP_GPIO_OUTPUT();
 #endif
@@ -68,27 +70,54 @@ void motorInit(void){
 #endif
 
 #if ENABLE_DIR
-	MOTOR1_DIR_GPIO();
-	MOTOR2_DIR_GPIO();
-	MOTOR3_DIR_GPIO();
+	MOTOR1_DIR_MUX_GPIO();
+	MOTOR2_DIR_MUX_GPIO();
+	MOTOR3_DIR_MUX_GPIO();
 	#if ENABLE_ROT
-		MOTORROT_DIR_GPIO();
+		MOTORROT_DIR_MUX_GPIO();
+		MOTORROT_DIR_SET_OUTPUT();
 	#endif
-	MOTOR_DIR_OUTPUT();
+	MOTOR1_DIR_SET_OUTPUT();
+	MOTOR2_DIR_SET_OUTPUT();
+	MOTOR3_DIR_SET_OUTPUT();
 
 #endif
 
 #if ENABLE_EN
-	MOTOR1_EN_GPIO(); MOTOR1_EN_DISABLE();
-	MOTOR2_EN_GPIO(); MOTOR2_EN_DISABLE();
-	MOTOR3_EN_GPIO(); MOTOR3_EN_DISABLE();
+	MOTOR1_EN_MUX_GPIO(); MOTOR1_EN_DISABLE();
+	MOTOR2_EN_MUX_GPIO(); MOTOR2_EN_DISABLE();
+	MOTOR3_EN_MUX_GPIO(); MOTOR3_EN_DISABLE();
 	#if ENABLE_ROT
-		MOTORROT_EN_GPIO(); MOTORROT_EN_DISABLE();
-		MOTORROT_EN_OUTPUT();
+		MOTORROT_EN_MUX_GPIO(); MOTORROT_EN_DISABLE();
+		MOTORROT_EN_SET_OUTPUT();
 	#endif
-		MOTOR_EN_OUTPUT();
+	MOTOR1_EN_SET_OUTPUT();
+	MOTOR2_EN_SET_OUTPUT();
+	MOTOR3_EN_SET_OUTPUT();
 #endif
 
+}
+
+void moveToInitPos(uint32_t toggle_US){
+	bool m1_run = true; 	// Debouce
+	bool m2_run = true; 	// Debouce
+	bool m3_run = true; 	// Debouce
+
+	while(true){
+		waitUs(toggle_US);
+
+		// Step each (allowed) Motor
+		if(m1_run){MOTOR1_STEP_GPIO_TOGGLE();}
+		if(m2_run){MOTOR2_STEP_GPIO_TOGGLE();}
+		if(m3_run){MOTOR3_STEP_GPIO_TOGGLE();}
+
+		// Check any Sensor  (set false if Motor is at init-Position
+		if(SENSOR1_STATUS()){m1_run = false;}
+		if(SENSOR2_STATUS()){m2_run = false;}
+		if(SENSOR3_STATUS()){m3_run = false;}
+
+		if ((!m1_run)&&(!m2_run)&&(!m3_run)){break;}
+	}
 }
 
 int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
@@ -188,9 +217,9 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 	FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
-	if(mot1_Abs!=0){FTM0->CONTROLS[MOTOR1_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
-	if(mot2_Abs!=0){FTM0->CONTROLS[MOTOR2_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
-	if(mot3_Abs!=0){FTM0->CONTROLS[MOTOR3_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
+	if(mot1_Abs!=0){FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
+	if(mot2_Abs!=0){FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
+	if(mot3_Abs!=0){FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 
 
 	//////////////////////////////////////////////////////////////////
@@ -293,6 +322,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 			}
 
 
+
 int moveRotation(uint32_t RotSteps){
 
 #if !ENABLE_ROT
@@ -342,13 +372,13 @@ int moveRotation(uint32_t RotSteps){
 
 	// Set Initial Pause Value
 	if(Steps_Abs !=0){
-		FTM0->CONTROLS[MOTORROT_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;
+		FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;
 	}
 	// activate Timer Interrupts (Channels) unless Step number isn't Zero
-	if(Steps_Abs!=0){FTM0->CONTROLS[MOTORROT_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
+	if(Steps_Abs!=0){FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 
 	// Mux Pins to FTM-Channel
-	MOTORROT_STEP_FTM();
+	MOTORROT_STEP_MUX_FTM();
 
 
 	ftm0StartClk(CLK_SRC_GLOBAL,PS_GLOBAL);

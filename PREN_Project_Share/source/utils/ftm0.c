@@ -15,6 +15,9 @@
 #include "ftm0.h"
 #include "globals.h"
 #include "motor_config.h"
+#if DEBUG_MODE
+	#include "reserve_pin_config.h"
+#endif
 
 /**
  * Default handler is called if there is no handler for the FTM0 channel or tof interrupt
@@ -147,7 +150,9 @@ void FTM0CH0_IRQHandler(void){
 void FTM0CH1_IRQHandler(void){
 	FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
+#if DEBUG_MODE
 	RES1_GPIO_HIGH(); // Monitoring ISR-Time
+#endif
 	// If Mx_Step is false: 	Output was high before
 		if (MOTOR1_STEP_STATUS()){
 			MOTOR1_STEP_GPIO_LOW();									// Output was toggled to true in the current ISR
@@ -184,13 +189,17 @@ void FTM0CH1_IRQHandler(void){
 			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
+#if DEBUG_MODE
 		RES1_GPIO_LOW(); // Monitoring ISR-Time
+#endif
 }
 
 void FTM0CH2_IRQHandler(void){
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
+#if DEBUG_MODE
 	RES1_GPIO_HIGH(); // Monitoring ISR-Time
+#endif
 	// If Mx_Step is true: 	Output was high before
 		if (MOTOR2_STEP_STATUS()){
 			MOTOR2_STEP_GPIO_LOW();
@@ -276,18 +285,17 @@ void FTM0CH2_IRQHandler(void){
 			Motor2_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
+#if DEBUG_MODE
 		RES1_GPIO_LOW(); // Monitoring ISR-Time
+#endif
 }
 
 void FTM0CH4_IRQHandler(void){
 	FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
-#if DEBUG	//DEBUG Hook
-	if(Motor3_Step_Curr==3){
-		int i = 0;
-	}
-#endif
+#if DEBUG_MODE
 	RES1_GPIO_HIGH(); // Monitoring ISR-Time
+#endif
 	// If Status is true: 	Output was high before
 		if (MOTOR3_STEP_STATUS()){
 
@@ -325,8 +333,10 @@ void FTM0CH4_IRQHandler(void){
 				Motor3_Step_Curr +=1;							// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 			}
+#if DEBUG_MODE
 		RES1_GPIO_LOW(); // Monitoring ISR-Time
-
+#endif
 }
+
 
 

@@ -10,6 +10,7 @@ RM := rm -rf
 -include sources.mk
 -include startup/subdir.mk
 -include source/utils/subdir.mk
+-include source/control/sensor/subdir.mk
 -include source/control/motor/subdir.mk
 -include source/control/coil/subdir.mk
 -include source/control/subdir.mk

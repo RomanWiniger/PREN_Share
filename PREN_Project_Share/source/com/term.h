@@ -13,6 +13,7 @@
 #ifndef SOURCES_TERM_H_
 #define SOURCES_TERM_H_
 
+#include <reserve_pin_config.h>
 #include "platform.h"
 
 typedef tError (*cmdHandler)(const char *cmd);
@@ -26,7 +27,9 @@ typedef struct commandLineHandler
 } tCommandLineHandler;
 
 struct ReceivedCommand{
-
+#if COMMAND_BYTE
+	bool CMD[8];
+#endif
 	int32_t Steps1; //steps of motor1
 	int32_t Steps2; //steps of motor2
 	int32_t Steps3; //steps of motor3

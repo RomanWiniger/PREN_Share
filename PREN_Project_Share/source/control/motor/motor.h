@@ -11,5 +11,6 @@
 void motorInit(void);
 int moveWay(uint32_t Mot1, uint32_t Mot2,uint32_t Mot3);
 int moveRotation(uint32_t RotSteps);
+void moveToInitPos(void);
 
 #endif /* MOTOR_STEPPER_H_ */
