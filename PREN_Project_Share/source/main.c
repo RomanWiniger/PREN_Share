@@ -17,14 +17,11 @@
 #include "term.h"
 #include "control.h"
 #include "globals.h"
+#include "coil.h"
+
 #include "motor_config.h"
-
-#if SENSOR_TEST
-#include "sensor.h"
-#include "sensor_config.h"
-#endif
-
 #if DEBUG_MODE
+
 	#include "motor.h"
 #endif
 
@@ -39,19 +36,18 @@ int main(void)
   commandInit();
   controlInit();
 
-#if SENSOR_TEST
-  bool sensor1,sensor2,sensor3;
+#if DEBUG_MODE
 
-  for(;;){
-  	  if(SENSOR1_STATUS()){sensor1=true;}else{{sensor1=false;}}
-  	  if(SENSOR2_STATUS()){sensor2=true;}else{{sensor3=false;}}
-  	  if(SENSOR3_STATUS()){sensor3=true;}else{{sensor3=false;}}
-  }
-#endif
+  RES1_MUX_GPIO();
+  RES1_SET_OUTPUT();
+  RES1_GPIO_HIGH();
+  RES2_MUX_GPIO();
+  RES2_SET_OUTPUT();
 
-#if TEST_SEQUENCE
-  uint64_t cycles = 0;
+uint64_t cycles = 0;
   while(true){
+	  /*
+	   * ABFOLGE DRIN LASSEN
 	  moveWay(4878, 4878, 4878);
 	  moveWay(361, -1670, 2123);
 	  moveWay(2467, 2668, 2320);
@@ -62,37 +58,32 @@ int main(void)
 	  moveWay(2810, -2366, -2366);
 	  moveWay(-4878, -4878, -4878);
 	  cycles++;
+	  */
+	  while(true){
+		  coil_ctrl(true);
+		  coil_ctrl(false);
+	  }
+
   }
-#endif
-
-#if DEBUG_MODE
-  // Initialize Reserve Pins (ISR Monitoring)
-  RES1_MUX_GPIO();
-  RES1_SET_OUTPUT();
-  RES1_GPIO_HIGH();
-  RES2_MUX_GPIO();
-  RES2_SET_OUTPUT();
-
-
+	  /*
+  moveWay(300,500,800);
+  moveWay(-3000,-1000,1067);
+  moveWay(120,456,-1000);
+*/
   //BitMonitor PORTA
   PORTA->PCR;
   GPIOA->PDDR;
   GPIOA->PDOR;
 
+  //BitMonitor PORTA
+  PORTD->PCR;
+  GPIOD->PDDR;
+  GPIOD->PDOR;
+
   //BitMonitor PORTB
   PORTB->PCR;
   GPIOB->PDDR;
   GPIOB->PDOR;
-
-  //BitMonitor PORTC
-  PORTC->PCR;
-  GPIOC->PDDR;
-  GPIOC->PDOR;
-
-  //BitMonitor PORTD
-  PORTD->PCR;
-  GPIOD->PDDR;
-  GPIOD->PDOR;
 
 #else
   while(TRUE)
