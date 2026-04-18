@@ -35,7 +35,9 @@
 	#include "motor.h"
 #endif
 
-
+#if INIT_POS_TEST
+	#include "motor.h"
+#endif
 
 /**
  * Terminal-Demo
@@ -55,6 +57,12 @@ for(;;){
 	if(SENSOR2_STATUS()){sens2=true;}else{sens2=false;}
 	if(SENSOR3_STATUS()){sens3=true;}else{sens3=false;}
 }
+#endif
+
+#if INIT_POS_TEST
+	// motorInit() is done in controlInit()
+	moveToInitPos(300); // Argument: Mikro-sekunden zwischen Step-Toggles
+						// je tiefer je schneller
 #endif
 
 #if TEST_SEQUENCE

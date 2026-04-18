@@ -8,6 +8,7 @@
 #define TEST_SEQUENCE		(1 && DEBUG_MODE) // Nur aktiv im DEBUG_MODE
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
+#define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
 
 
 
