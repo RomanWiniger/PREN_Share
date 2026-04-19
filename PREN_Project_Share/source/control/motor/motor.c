@@ -106,15 +106,15 @@ void moveToInitPos(uint32_t toggle_US){
 	while(true){
 		waitUs(toggle_US);
 
-		// Step each (allowed) Motor
-		if(m1_run){MOTOR1_STEP_GPIO_TOGGLE();}
-		if(m2_run){MOTOR2_STEP_GPIO_TOGGLE();}
-		if(m3_run){MOTOR3_STEP_GPIO_TOGGLE();}
-
 		// Check any Sensor  (set false if Motor is at init-Position
 		if(SENSOR1_STATUS()){m1_run = false;}
 		if(SENSOR2_STATUS()){m2_run = false;}
 		if(SENSOR3_STATUS()){m3_run = false;}
+
+		// Step each (allowed) Motor
+		if(m1_run){MOTOR1_STEP_GPIO_TOGGLE();}
+		if(m2_run){MOTOR2_STEP_GPIO_TOGGLE();}
+		if(m3_run){MOTOR3_STEP_GPIO_TOGGLE();}
 
 		if ((!m1_run)&&(!m2_run)&&(!m3_run)){break;}
 	}
