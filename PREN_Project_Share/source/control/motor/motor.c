@@ -323,7 +323,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 
 
 
-int moveRotation(uint32_t RotSteps){
+int moveRotation(int32_t RotSteps){
 
 #if !ENABLE_ROT
     return 0;  // früh raus wenn ROT deaktiviert
