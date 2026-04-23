@@ -372,6 +372,7 @@ int moveRotation(int32_t RotSteps){
 
 	// Set Initial Pause Value
 	if(Steps_Abs !=0){
+		MotorRot_Pause = MOTOR_MINPAUSE_MOD_TICK;
 		FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;
 	}
 	// activate Timer Interrupts (Channels) unless Step number isn't Zero
@@ -387,9 +388,9 @@ int moveRotation(int32_t RotSteps){
 	//Wait forever until Steps are reachend
 	while (true){
 		if(MotorRot_Step_Curr>=Steps_Abs){break;}
-		initGlobalsRot();
-	}
 
+	}
+	initGlobalsRot();
 	waitMs((MOTOR_PULSE_US/1000)*1000);	// Wait 100 Pulse-width for last Pulse to finish
 	resetRotTimers();				// RESET Global Variables
 	ftm0StopClk();				// Stop CLK and Prescaler (All Channels)return 1;
