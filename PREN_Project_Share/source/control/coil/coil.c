@@ -7,19 +7,21 @@
 #include "coil.h"
 #include "coil_config.h"
 #include "stdbool.h"
+#include "reserve_pin_config.h"
 
 int coilInit(){
-	CTRL_COIL_GPIO();
-	CTRL_COIL_OUTPUT();
+	RES1_MUX_GPIO();     // Pin als GPIO konfigurieren
+	RES1_SET_OUTPUT();   // Pin als Ausgang setzen
 
 	return 1;
 }
 
 int coil_ctrl(bool act){
 	if(act){
-		CTRL_COIL_ACT();
+		RES1_GPIO_HIGH();    // Pin HIGH (3.7V)
+
 	}else{
-		CTRL_COIL_DEACT();
+		RES1_GPIO_LOW();     // Pin LOW (0V)
 	}
 
 	return 1;

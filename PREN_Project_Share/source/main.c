@@ -25,6 +25,7 @@
 #include "term.h"
 #include "control.h"
 #include "globals.h"
+#include "coil.h"
 
 #if SENSOR_TEST
 	#include "sensor_config.h"
@@ -48,6 +49,8 @@ int main(void)
   commandInit();
   controlInit();
 
+  coil_ctrl(true);
+  coil_ctrl(false);
 #if SENSOR_TEST
 for(;;){
 	// sensorInit() is done in controlInit()

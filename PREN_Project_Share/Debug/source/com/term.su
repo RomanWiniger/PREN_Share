@@ -9,4 +9,4 @@
 ../source/com/term.c:181:6:termDoWork	520	static
 ../source/com/term.c:203:6:termInit	16	static
 ../source/com/term.c:214:15:startHandler	48	static
-../source/com/term.c:240:6:commandInit	8	static
+../source/com/term.c:239:6:commandInit	8	static

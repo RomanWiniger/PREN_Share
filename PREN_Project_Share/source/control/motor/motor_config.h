@@ -12,7 +12,7 @@
 #define ENABLE_STEP			1
 #define ENABLE_DIR			1
 #define ENABLE_EN			1
-#define ENABLE_ROT			0
+#define ENABLE_ROT			1
 #define OVERFLOW_HANDLING	1
 
 // Definition Direction
