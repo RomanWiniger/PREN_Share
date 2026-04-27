@@ -52,25 +52,36 @@ int main(void)
   coil_ctrl(true);
   coil_ctrl(false);
 #if SENSOR_TEST
-for(;;){
-	// sensorInit() is done in controlInit()
-	bool sens1,sens2,sens3 = false;
 
-	if(SENSOR1_STATUS()){sens1=true;}else{sens1=false;}
-	if(SENSOR2_STATUS()){sens2=true;}else{sens2=false;}
-	if(SENSOR3_STATUS()){sens3=true;}else{sens3=false;}
+	// sensorInit() is done in controlInit()
+	bool sens1 = false;
+	bool sens2 = false;
+	bool sens3 = false;
+	for(;;){
+	if(SENSOR1_STATUS())
+	{sens1=true;}
+	else{sens1=false;}
+	if(SENSOR2_STATUS())
+	{sens2=true;}
+	else{sens2=false;}
+	if(SENSOR3_STATUS())
+	{sens3=true;}
+	else{sens3=false;}
+
 }
 #endif
 
 #if INIT_POS_TEST
 	// motorInit() is done in controlInit()
-	moveToInitPos(300); // Argument: Mikro-sekunden zwischen Step-Toggles
+	moveToInitPos(1000); // Argument: Mikro-sekunden zwischen Step-Toggles
 						// je tiefer je schneller
 #endif
 
 #if TEST_SEQUENCE
   uint64_t cycles = 0;
+
   while(true){
+
 	  moveWay(4878, 4878, 4878);
 	  moveWay(361, -1670, 2123);
 	  moveWay(2467, 2668, 2320);
@@ -88,7 +99,6 @@ for(;;){
   // Initialize Reserve Pins (ISR Monitoring)
   RES1_MUX_GPIO();
   RES1_SET_OUTPUT();
-  RES1_GPIO_HIGH();
   RES2_MUX_GPIO();
   RES2_SET_OUTPUT();
 

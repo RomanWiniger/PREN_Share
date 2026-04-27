@@ -103,18 +103,28 @@ void moveToInitPos(uint32_t toggle_US){
 	bool m2_run = true; 	// Debouce
 	bool m3_run = true; 	// Debouce
 
+	MOTOR1_EN_ENABLE();
+	MOTOR2_EN_ENABLE();
+	MOTOR3_EN_ENABLE();
+
+	MOTOR1_DIR_REV();
+	MOTOR2_DIR_REV();
+	MOTOR3_DIR_REV();
 	while(true){
 		waitUs(toggle_US);
 
 		// Check any Sensor  (set false if Motor is at init-Position
-		if(SENSOR1_STATUS()){m1_run = false;}
-		if(SENSOR2_STATUS()){m2_run = false;}
-		if(SENSOR3_STATUS()){m3_run = false;}
+		if(!SENSOR1_STATUS()){m1_run = false;}
+		if(!SENSOR2_STATUS()){m2_run = false;}
+		if(!SENSOR3_STATUS()){m3_run = false;}
 
 		// Step each (allowed) Motor
-		if(m1_run){MOTOR1_STEP_GPIO_TOGGLE();}
-		if(m2_run){MOTOR2_STEP_GPIO_TOGGLE();}
-		if(m3_run){MOTOR3_STEP_GPIO_TOGGLE();}
+		if(m1_run){MOTOR1_STEP_GPIO_TOGGLE();
+		}
+		if(m2_run){MOTOR2_STEP_GPIO_TOGGLE();
+		}
+		if(m3_run){MOTOR3_STEP_GPIO_TOGGLE();
+		}
 
 		if ((!m1_run)&&(!m2_run)&&(!m3_run)){break;}
 	}
