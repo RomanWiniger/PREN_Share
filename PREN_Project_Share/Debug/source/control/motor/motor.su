@@ -1,4 +1,4 @@
-../source/control/motor/motor.c:35:6:motorInit	8	static
+../source/control/motor/motor.c:36:6:motorInit	8	static
 ../source/control/motor/motor.c:101:6:moveToInitPos	24	static
 ../source/control/motor/motor.c:133:5:moveWay	56	static
 ../source/control/motor/motor.c:336:5:moveRotation	24	static

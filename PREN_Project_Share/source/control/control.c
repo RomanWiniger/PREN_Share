@@ -113,9 +113,10 @@ void controlInit(){
 
 	waitInit();		// Init for waitMs()-Function
 	clkGating();	// GPIO Ports A...E
+	sensorInit();		// Pins for Coil
 	motorInit();	// Pins for Stepper Motors
 	coilInit();		// Pins for Coil
-	sensorInit();		// Pins for Coil
+
 
 }
 

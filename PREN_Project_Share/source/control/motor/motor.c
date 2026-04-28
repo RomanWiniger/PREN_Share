@@ -28,6 +28,7 @@ void resetMoveTimers(void);
 void resetRotTimers(void);
 void initGlobalsMove(void);
 void initGlobalsRot(void);
+void moveToInitPos(uint32_t toggle_US);
 
 int32_t setTimerValues(int32_t,int32_t,int32_t);
 
@@ -46,7 +47,6 @@ void motorInit(void){
 	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
 	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
 	FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0);
-
 	#if ENABLE_ROT
 		FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0) ;
 	#endif
@@ -95,7 +95,7 @@ void motorInit(void){
 	MOTOR2_EN_SET_OUTPUT();
 	MOTOR3_EN_SET_OUTPUT();
 #endif
-
+	moveToInitPos(1000);
 }
 
 void moveToInitPos(uint32_t toggle_US){
