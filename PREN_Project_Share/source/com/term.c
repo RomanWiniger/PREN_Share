@@ -28,6 +28,13 @@ typedef enum
 } tUart;
 
 static tCommandLineHandler start; //declaration of the handler for commands from The Raspberry
+static tCommandLineHandler initCmd;
+static tCommandLineHandler cameraCmd;
+static tCommandLineHandler puzzleBeginCmd;
+static tCommandLineHandler puzzleEndCmd;
+
+
+
 static tUart destination;
 static tCommandLineHandler *head = NULL;
 
@@ -37,7 +44,6 @@ void termRegisterCommandLineHandler(tCommandLineHandler *clh, char* cmd, char *c
   head = clh;
 
   strncpy(clh->cmd, cmd, sizeof(clh->cmd));
-  strcat(clh->cmd, " ");
   strncpy(clh->cmdDesc, cmdDesc, sizeof(clh->cmdDesc));
   clh->cmdHandler = h;
 }
@@ -230,20 +236,58 @@ static tError startHandler(const char *args)
 
 	newCommand(commands);
 
-	termWriteLine("empfangen");
-
 	return EC_SUCCESS;
 }
+
+static tError initHandler(const char *args)
+{
+	moveToInitPos(1000);
+    termWriteLine("OK");
+    return EC_SUCCESS;
+}
+
+static tError cameraHandler(const char *args)
+{
+    //Roboter in Kameraposition fahren
+	moveWay(1000, 1000, 1000);//to be defined
+    termWriteLine("OK");
+    return EC_SUCCESS;
+}
+
+static tError puzzleBeginHandler(const char *args)
+{
+    return EC_SUCCESS;//do nothing
+}
+
+static tError puzzleEndHandler(const char *args)
+{
+    termWriteLine("FINISH");
+    return EC_SUCCESS;
+}
+
+
 
 
 void commandInit(){
 
 	 termRegisterCommandLineHandler(
 	 &start,//storrage location
-	 "start",//name of the command
+	 "start ",//name of the command
 	 "start command",//description
 	 startHandler//the handler of the command
 	    );
+
+	 termRegisterCommandLineHandler(
+	 &initCmd, "INIT", "Initialize robot", initHandler);
+
+	 termRegisterCommandLineHandler(
+	 &cameraCmd, "CAMERA", "Move to camera position", cameraHandler);
+
+	 termRegisterCommandLineHandler(
+	 &puzzleBeginCmd, "PUZZLE_BEGIN", "Begin puzzle sequence", puzzleBeginHandler);
+
+	 termRegisterCommandLineHandler(
+	 &puzzleEndCmd, "PUZZLE_END", "End puzzle sequence", puzzleEndHandler);
 
 }
 
