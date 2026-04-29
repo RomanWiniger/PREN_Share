@@ -256,7 +256,8 @@ static tError cameraHandler(const char *args)
 
 static tError puzzleBeginHandler(const char *args)
 {
-    return EC_SUCCESS;//do nothing
+	MoveToInitPos(1000);
+    return EC_SUCCESS;
 }
 
 static tError puzzleEndHandler(const char *args)
