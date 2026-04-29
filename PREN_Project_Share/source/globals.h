@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DEBUG_MODE			0
+#define DEBUG_MODE			1
 #define TEST_SEQUENCE		(1 && DEBUG_MODE) // Nur aktiv im DEBUG_MODE
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
@@ -12,7 +12,7 @@
 
 
 
-//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////Te
 // TIMER CONFIG
 //////////////////////////////////////////////////////
 
@@ -78,9 +78,9 @@
 
 #define NUM_CORRECTOR_LOOPS		10	// Rounding Error Correction
 
-#define RAMP_ACTIVE				1	// Startup Ramp active
+#define RAMP_ACTIVE				0	// Startup Ramp active
 #if RAMP_ACTIVE
-	#define RAMP_MODE_PS		1						// Prescaler modulation in 4 Steps
+	#define RAMP_MODE_PS		0						// Prescaler modulation in 4 Steps
 	#define RAMP_MODE_NSTEP		0 && !RAMP_MODE_PS		// N Spedmodes: Startup and Run
 	#define RAMP_MODE_PREMIUM	0 && !RAMP_MODE_TWOSTEP	// Calculation in ISR, Linear
 	#define RAMP_NUMB_STEPS		50		//Fastest Motor: Ramp from start to this step number
@@ -91,7 +91,7 @@
 
     #define RAMP_NSTEPS				5		// NSTEP MODE: Number of Steps in Ramp (min. 2)
     #define RAMP_NSTEPS_STEPS		200		// NSTEP MODE: Number of Ticks to be ramped (per STEP)
-    #define RAMP_NSTEPS_STEP_TICKS	20		// NSTEP MODE: Inrease Time per Step [%]
+    #define RAMP_NSTEPS_STEP_PERC	20		// NSTEP MODE: Inrease Time per Step [%]
     #define RAMP_NSTEPS_STEP_VAR	0		// Unused
 
 #endif
@@ -167,55 +167,49 @@ extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tic
 #endif
 
 #if RAMP_MODE_NSTEP
-	extern int64_t Ramp_Ticks[RAMP_NSTEPS];		// Array wirh Ticks per Ramp Step
-	extern bool Ramp_M1_Start_State[RAMP_NSTEPS];			//true = Pulse false )
-	extern bool Ramp_M1_End_State[RAMP_NSTEPS];			//true = Pulse false )
-	extern int64_t Ramp_M1_End_Rem_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pause_Ticks_Init[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pause_Ticks_Init_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pause_Ticks_Init_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pause_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pause_Ticks_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pause_Ticks_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pulse_Ticks_Init[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pulse_Ticks_Init_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pulse_Ticks_Init_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pulse_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pulse_Ticks_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M1_Pulse_Ticks_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
+	extern uint16_t Ramp_Step_Curr;
+	extern uint16_t Ramp_Step_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_Step_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_Step_Ticks_OF_Curr[RAMP_NSTEPS];
 
-	extern bool Ramp_M2_Start_State[RAMP_NSTEPS];			//true = Pulse false )
-	extern bool Ramp_M2_End_State[RAMP_NSTEPS];			//true = Pulse false )
-	extern int64_t Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pause_Ticks_Init[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pause_Ticks_Init_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pause_Ticks_Init_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pause_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pause_Ticks_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pause_Ticks_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pulse_Ticks_Init[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pulse_Ticks_Init_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pulse_Ticks_Init_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pulse_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pulse_Ticks_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M2_Pulse_Ticks_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
+	extern bool Ramp_M1_Start_State[RAMP_NSTEPS];
+	extern bool Ramp_M1_End_State[RAMP_NSTEPS];
+	extern bool Ramp_M1_Rem_Pending[RAMP_NSTEPS+1]; // true if pending remainig ticks at beginning of Step (last for initial
+	extern uint16_t Ramp_M1_End_Rem_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M1_End_Rem_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS];
+	extern uint16_t Ramp_M1_Pause_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M1_Pause_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M1_Pause_Ticks_OF_Curr[RAMP_NSTEPS];
+	extern uint16_t Ramp_M1_Pulse_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M1_Pulse_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M1_Pulse_Ticks_OF_Curr[RAMP_NSTEPS];
 
-	extern bool Ramp_M3_Start_State[RAMP_NSTEPS];			//true = Pulse false )
-	extern bool Ramp_M3_End_State[RAMP_NSTEPS];			//true = Pulse false )
-	extern int64_t Ramp_M3_End_Rem_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pause_Ticks_Init[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pause_Ticks_Init_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pause_Ticks_Init_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pause_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pause_Ticks_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pause_Ticks_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pulse_Ticks_Init[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pulse_Ticks_Init_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pulse_Ticks_Init_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pulse_Ticks[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pulse_Ticks_OF[RAMP_NSTEPS];			//true = Pulse false )
-	extern uint16_t Ramp_M3_Pulse_Ticks_OF_Curr[RAMP_NSTEPS];			//true = Pulse false )
+	extern bool Ramp_M2_Start_State[RAMP_NSTEPS];
+	extern bool Ramp_M2_End_State[RAMP_NSTEPS];
+	extern bool Ramp_M2_Rem_Pending[RAMP_NSTEPS+1];
+	extern uint16_t Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M2_End_Rem_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS];
+	extern uint16_t Ramp_M2_Pause_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M2_Pause_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M2_Pause_Ticks_OF_Curr[RAMP_NSTEPS];
+	extern uint16_t Ramp_M2_Pulse_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M2_Pulse_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M2_Pulse_Ticks_OF_Curr[RAMP_NSTEPS];
 
+	extern bool Ramp_M3_Start_State[RAMP_NSTEPS];
+	extern bool Ramp_M3_End_State[RAMP_NSTEPS];
+	extern bool Ramp_M3_Rem_Pending[RAMP_NSTEPS+1];
+	extern uint16_t Ramp_M3_End_Rem_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M3_End_Rem_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS];
+	extern uint16_t Ramp_M3_Pause_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M3_Pause_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M3_Pause_Ticks_OF_Curr[RAMP_NSTEPS];
+	extern uint16_t Ramp_M3_Pulse_Ticks[RAMP_NSTEPS];
+	extern uint16_t Ramp_M3_Pulse_Ticks_OF[RAMP_NSTEPS];
+	extern uint16_t Ramp_M3_Pulse_Ticks_OF_Curr[RAMP_NSTEPS];
 #endif
 
 #if DEBUG

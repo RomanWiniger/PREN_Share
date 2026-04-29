@@ -294,10 +294,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 			}
 		}
 #elif RAMP_MODE_NSTEP
-		if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
-		if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
-		if(mostMotor ==3){tmp_steps = Motor3_Step_Curr;}
-		if(tmp_steps>=RAMP_NUMB_STEPS){Ramp_twostep=false;}
+		// code here
 
 #elif RAMP_MODE_PREMIUM
 		if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}

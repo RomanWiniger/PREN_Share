@@ -29,9 +29,12 @@ void Default_Handler_FTM0()
 
 //Used Channels:
 void FTM0CH0_IRQHandler(void);
-void FTM0CH1_IRQHandler(void);
-void FTM0CH2_IRQHandler(void);
-void FTM0CH4_IRQHandler(void);
+void FTM0CH1_IRQHandler(void); // Motor 1
+void FTM0CH2_IRQHandler(void); // Motor 2
+void FTM0CH4_IRQHandler(void); // Motor 3
+#if RAMP_MODE_NSTEP
+void FTM0CH5_IRQHandler(void); // Ramp Step incrementer
+#endif
 void FTM0TOF_IRQHandler(void);
 
 // not used Channels
@@ -40,7 +43,9 @@ void FTM0TOF_IRQHandler(void);
 //void FTM0CH2_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 void FTM0CH3_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 //void FTM0CH4_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+#if !RAMP_MODE_NSTEP
 void FTM0CH5_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+#endif
 void FTM0CH6_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 void FTM0CH7_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 //void FTM0TOF_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
@@ -109,17 +114,6 @@ void ftm0EnableIRQ()
   // Enable FTM0 interrupt on NVIC with Prio: PRIO_FTM0 (defined in platform.h)
   NVIC_SetPriority(FTM0_IRQn, PRIO_FTM0);       // set interrupt priority
   NVIC_EnableIRQ(FTM0_IRQn);                    // enable interrupt
-  //FTM0->CONTROLS[0].CnSC &= ~FTM_CnSC_CHIE_MASK;
-  //FTM0->CONTROLS[1].CnSC |= FTM_CnSC_CHIE_MASK;	// Motor 1
-  //FTM0->CONTROLS[2].CnSC |= FTM_CnSC_CHIE_MASK;	// Motor 2
-  //FTM0->CONTROLS[3].CnSC &= ~FTM_CnSC_CHIE_MASK;
-  //FTM0->CONTROLS[4].CnSC |= FTM_CnSC_CHIE_MASK;	// Motor 3
-
-#if DEBUG
-	Ramp_CNV_Logger[Ramp_Buffer_Index++]=0;
-	if (Ramp_Buffer_Index>=1000){
-		Ramp_Buffer_Index =0;}
-#endif
 }
 
 void ftm0StopIRQ()
@@ -152,6 +146,54 @@ void FTM0CH1_IRQHandler(void){
 													// Do not manipulate!!!!!!
 #if DEBUG_MODE
 	RES1_GPIO_HIGH(); // Monitoring ISR-Time
+#endif
+
+#if RAMP_MODE_NSTEP 	// Ramping Part
+
+	static bool ramp_motor_state; // true = high
+
+if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
+	if(Ramp_M1_Rem_Pending[Ramp_Step_Curr-1]){ // if True: Remaining Start  Ticks to Process
+		if(Ramp_M1_End_Rem_Ticks_OF[Ramp_Step_Curr-1]>0){ // Todo Hier wird Array unter 0 ausgelesen!!!
+			// Leave ChV with the current value
+			Ramp_M1_End_Rem_Ticks_OF[Ramp_Step_Curr-1]--;
+		}else{
+			if(Ramp_M1_Start_State[Ramp_Step_Curr-1]==false){
+				MOTOR2_STEP_GPIO_HIGH();
+				FTM0->CONTROLS[1].CnV  += Ramp_M1_Pulse_Ticks[Ramp_Step_Curr-1];	// Set Distance to next Pause
+				ramp_motor_state=true;
+				Motor1_Step_Curr +=1;	// Only when positive edge
+
+			}else{
+				MOTOR2_STEP_GPIO_LOW();
+				FTM0->CONTROLS[1].CnV  += Ramp_M1_Pause_Ticks[Ramp_Step_Curr-1];	// Set Distance to next Pause}
+				ramp_motor_state=false;
+			}
+			Motor1_Step_Curr +=1;
+		}
+	}else if(ramp_motor_state){ // If State is true: 	Output is high
+		if(Ramp_M1_Pulse_Ticks_OF[Ramp_Step_Curr-1]>0){
+			// Leave ChV with the current value
+			Ramp_M1_Pulse_Ticks_OF[Ramp_Step_Curr-1]--;
+		}else{
+			MOTOR1_STEP_GPIO_HIGH();
+			FTM0->CONTROLS[1].CnV  += Ramp_M1_Pulse_Ticks[Ramp_Step_Curr-1];	// Set Distance to next Pulse
+			ramp_motor_state = true;
+			Ramp_M1_Pulse_Ticks_OF_Curr[Ramp_Step_Curr-1] = Ramp_M1_Pulse_Ticks_OF[Ramp_Step_Curr-1];			// Restart Overflow counter
+		}
+	}else{ // If State is false: 	Output is low
+		if(Ramp_M1_Pause_Ticks_OF[Ramp_Step_Curr-1]>0){
+			// Leave ChV with the current value
+			Ramp_M1_Pause_Ticks_OF[Ramp_Step_Curr-1]--;
+		}else{
+			MOTOR1_STEP_GPIO_HIGH();
+			FTM0->CONTROLS[1].CnV  += Ramp_M1_Pause_Ticks[Ramp_Step_Curr-1];	// Set Distance to next Pulse
+			Motor1_Step_Curr +=1;	// Only when positive edge
+			ramp_motor_state = false;
+			Ramp_M1_Pause_Ticks_OF_Curr[Ramp_Step_Curr-1] = Ramp_M1_Pause_Ticks_OF[Ramp_Step_Curr-1];			// Restart Overflow counter
+		}
+	}
+}else{		// Ramp is done
 #endif
 	// If Mx_Step is false: 	Output was high before
 		if (MOTOR1_STEP_STATUS()){
@@ -189,6 +231,12 @@ void FTM0CH1_IRQHandler(void){
 			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
+
+#if RAMP_MODE_NSTEP
+}
+
+#endif
+
 #if DEBUG_MODE
 		RES1_GPIO_LOW(); // Monitoring ISR-Time
 #endif
@@ -338,5 +386,23 @@ void FTM0CH4_IRQHandler(void){
 #endif
 }
 
+#if RAMP_MODE_NSTEP
+void FTM0CH5_IRQHandler(void){
+	FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
+													// Do not manipulate!!!!!!
+	// INCREMENT OF CURRENT RAMP STEP
 
+	if(Ramp_Step_Curr <= RAMP_NSTEPS){
+		if(Ramp_Step_Ticks_OF_Curr[Ramp_Step_Curr-1]>0){
+			// Leave ChV with the current value
+			Ramp_Step_Ticks_OF_Curr[Ramp_Step_Curr-1]--;
+		}else{
+			FTM0->CONTROLS[5].CnV += (RAMP_NSTEPS_STEPS);	// Set Distance next step edge
+			Ramp_Step_Curr +=1;
+		}
+	}else{
+		FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHIE(1);	// Disable Interrupt when Ramp is done
+	}
+}
+#endif
 
