@@ -32,8 +32,9 @@ void FTM0CH0_IRQHandler(void);
 void FTM0CH1_IRQHandler(void); // Motor 1
 void FTM0CH2_IRQHandler(void); // Motor 2
 void FTM0CH4_IRQHandler(void); // Motor 3
+void FTM0CH5_IRQHandler(void); // Rotation Motor
 #if RAMP_MODE_NSTEP
-void FTM0CH5_IRQHandler(void); // Ramp Step incrementer
+void FTM0CH6_IRQHandler(void); // Ramp Step incrementer
 #endif
 void FTM0TOF_IRQHandler(void);
 
@@ -43,10 +44,10 @@ void FTM0TOF_IRQHandler(void);
 //void FTM0CH2_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 void FTM0CH3_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 //void FTM0CH4_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+//void FTM0CH6_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));void FTM0CH5_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 #if !RAMP_MODE_NSTEP
-void FTM0CH5_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
-#endif
 void FTM0CH6_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
+#endif
 void FTM0CH7_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 //void FTM0TOF_IRQHandler(void) __attribute__ ((weak, alias("Default_Handler_FTM0")));
 
@@ -385,9 +386,40 @@ void FTM0CH4_IRQHandler(void){
 		RES1_GPIO_LOW(); // Monitoring ISR-Time
 #endif
 }
+void FTM0CH5_IRQHandler(void){
+    FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHF(1);   // Clear interrupt flag
+
+    if (MOTORROT_STEP_STATUS()){
+        // Output war HIGH: Pulse beenden, Pause starten
+        MOTORROT_STEP_GPIO_LOW();
+        FTM0->CONTROLS[5].CnV += MotorRot_Pause;
+
+        // Interrupt deaktivieren wenn alle Steps fertig
+        if (MotorRot_Step_Curr >= MotorRot_Step_Max){
+            FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHIE(1);
+        }
+    }else{
+        // Output war LOW: Pause beenden, Pulse starten
+#if OVERFLOW_HANDLING
+        if(MotorRot_Step_OF_Curr > 0){
+            MotorRot_Step_OF_Curr--;
+        }else{
+            MOTORROT_STEP_GPIO_HIGH();
+            FTM0->CONTROLS[5].CnV += MOTOR_PULSE_MOD_TICK;
+            MotorRot_Step_Curr += 1;
+            MotorRot_Step_OF_Curr = MotorRot_Step_OF;
+        }
+#else
+        MOTORROT_STEP_GPIO_HIGH();
+        FTM0->CONTROLS[5].CnV += MOTOR_PULSE_MOD_TICK;
+        MotorRot_Step_Curr += 1;
+#endif
+    }
+}
 
 #if RAMP_MODE_NSTEP
-void FTM0CH5_IRQHandler(void){
+
+void FTM0CH6_IRQHandler(void){
 	FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
 	// INCREMENT OF CURRENT RAMP STEP

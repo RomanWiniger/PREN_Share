@@ -113,9 +113,10 @@ void controlInit(){
 
 	waitInit();		// Init for waitMs()-Function
 	clkGating();	// GPIO Ports A...E
+	sensorInit();		// Pins for Coil
 	motorInit();	// Pins for Stepper Motors
 	coilInit();		// Pins for Coil
-	sensorInit();		// Pins for Coil
+
 
 }
 
@@ -136,7 +137,7 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 
 	if (((command.Steps1 != 0)||(command.Steps2 != 0)||(command.Steps3 != 0))&&(command.ErrorHandling==false)){
 		moveWay(command.Steps1,command.Steps2,command.Steps3);
-	}else if ((command.StepsRot > 0)&&(command.ErrorHandling==false)){
+	}if ((command.StepsRot > 0)&&(command.ErrorHandling==false)){
 		moveRotation(command.StepsRot);
 	}else if (command.ErrorHandling==true){
 		// Use last saved Values but with contrary direction
