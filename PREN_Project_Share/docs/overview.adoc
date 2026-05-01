@@ -1,0 +1,21 @@
+== Übersicht
+
+Dieses Projekt implementiert die eingebettete Firmware für einen *Delta-Roboter*, der im Rahmen des PREN-Moduls (Praktisches Projekt in Elektronik/Nachrichtentechnik) an der *Hochschule Luzern T&A*, Gruppe 1, 2026 entwickelt wurde.
+
+Die Firmware läuft auf einem *NXP Kinetis K22 (MK22F51212)* Mikrocontroller und ist verantwortlich für:
+
+* Empfang von Bewegungsbefehlen von einem Raspberry Pi über UART
+* Ansteuerung von drei linearen Schrittmotoren (Delta-Achsen)
+* Steuerung eines Rotationsmotors am Endeffektor
+* Aktivierung eines Elektromagneten (Spule) zur Objektmanipulation
+* Auslesen von Endschalter-Sensoren für die Referenzfahrt
+
+=== Team
+
+[cols="1,1"]
+|===
+| Name | Rolle
+
+| Pascal Hofstetter | Firmware-Entwicklung
+| Roman Winiger | Firmware-Entwicklung
+|===

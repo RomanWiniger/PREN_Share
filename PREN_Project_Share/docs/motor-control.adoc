@@ -1,0 +1,33 @@
+== Motorsteuerung
+
+=== Schrittimpuls-Erzeugung
+
+Schrittimpulse werden über *FTM0 Output-Compare-Interrupts* erzeugt. Jeder Motor hat einen dedizierten Kanal-ISR, der:
+
+1. Den Schritt-Pin auf HIGH setzt
+2. 100 µs wartet (Pulsbreite)
+3. Den Schritt-Pin auf LOW setzt
+4. Den nächsten Impuls basierend auf der konfigurierten Schrittpause plant
+
+Die Schrittpause bestimmt die Motorgeschwindigkeit. Eine kürzere Pause bedeutet eine schnellere Bewegung.
+
+=== Überlaufbehandlung
+
+FTM0 verwendet einen 16-Bit-Zähler (max. 65535 Ticks). Bei großen Schrittzahlen verfolgt die ISR Überlaufzyklen über einen 32-Bit-Zähler, der dekrementiert wird, bis die verbleibenden Schritte in einen einzelnen Timer-Zyklus passen.
+
+=== Rampenprofile
+
+Drei Beschleunigungsrampen-Strategien stehen zur Verfügung (zur Kompilierzeit ausgewählt):
+
+[cols="2,5"]
+|===
+| Modus | Beschreibung
+
+| `RAMP_MODE_PS` | Moduliert den FTM-Prescaler in 4 diskreten Stufen, um Anlaufstrom und Geräusche zu reduzieren
+| `RAMP_MODE_NSTEP` | Verwendet eine feste N-Schritt-Tabelle (Standard: 20 Schritte); FTM CH6 inkrementiert den Rampen-Index bei jedem Schritt
+| `RAMP_MODE_PREMIUM` | Berechnet eine lineare Rampe in der ISR bei jedem Schritt für die gleichmässigste Beschleunigung
+|===
+
+=== Referenzfahrt
+
+`moveToInitPos()` fährt alle Achsen langsam in Richtung der Endschalter. Wenn ein Sensor auslöst (aktiv LOW über Pull-up), stoppt die entsprechende Achse und ihre Position wird auf null gesetzt.

@@ -1,0 +1,22 @@
+= PREN Delta Robot Controller — Dokumentation
+Pascal Hofstetter; Roman Winiger
+:doctype: book
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+:imagesdir: images
+:revdate: 2026
+:organization: Hochschule Luzern T&A
+
+include::overview.adoc[]
+
+include::architecture.adoc[]
+
+include::hardware.adoc[]
+
+include::communication.adoc[]
+
+include::motor-control.adoc[]
+
+include::build.adoc[]

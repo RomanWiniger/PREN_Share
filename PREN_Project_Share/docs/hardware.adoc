@@ -1,0 +1,76 @@
+== Hardware
+
+=== Mikrocontroller
+
+[cols="2,3"]
+|===
+| Eigenschaft | Wert
+
+| Gerät | NXP Kinetis MK22F51212
+| Kern | ARM Cortex-M4 mit FPU
+| Kerntakt | 120 MHz
+| Bustakt | 60 MHz
+| Flash | 256 KB
+| Zielboards | MC_CAR (100-polig), TinyK22 (64-polig)
+|===
+
+=== Pin-Belegung
+
+==== Schrittmotoren
+
+[cols="2,2,2,2"]
+|===
+| Motor | Schritt-Pin | Richtungs-Pin | Enable-Pin
+
+| Motor 1 (Achse 1) | PA4 | — | —
+| Motor 2 (Achse 2) | PA5 | — | —
+| Motor 3 (Achse 3) | PD4 | — | —
+| Rotationsmotor    | PD5 | — | —
+|===
+
+==== Sensoren (Endschalter)
+
+[cols="2,2,3"]
+|===
+| Sensor | Pin | Konfiguration
+
+| Sensor 1 | PC8 | Digitaleingang, Pull-up
+| Sensor 2 | PC9 | Digitaleingang, Pull-up
+| Sensor 3 | PC10 | Digitaleingang, Pull-up
+|===
+
+==== Spule (Elektromagnet)
+
+[cols="2,2"]
+|===
+| Signal | Pin
+
+| Spulensteuerung | PD0 (GPIO-Ausgang)
+|===
+
+==== Debug- / Reserve-Pins
+
+[cols="2,2"]
+|===
+| Signal | Pin
+
+| Debug 0 | PA13
+| Debug 1 | PA12
+| Debug 2 | PD1
+| Debug 3 | PD6
+|===
+
+=== Timer — FTM0-Kanal-Zuordnung
+
+FTM0 läuft mit 60 MHz Bustakt (konfigurierbarer Prescaler) und erzeugt Schrittimpulse mit einer Pulsbreite von 100 µs.
+
+[cols="2,5"]
+|===
+| Kanal | Funktion
+
+| CH1 | Schrittimpuls Motor 1
+| CH2 | Schrittimpuls Motor 2
+| CH4 | Schrittimpuls Motor 3
+| CH5 | Schrittimpuls Rotationsmotor
+| CH6 | Rampen-Schritt-Inkrementierer (aktiv bei `RAMP_MODE_NSTEP`)
+|===

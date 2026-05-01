@@ -1,0 +1,56 @@
+== Softwarearchitektur
+
+Die Firmware ist als Bare-Metal-C (kein RTOS) mit einem modularen Schichtendesign aufgebaut.
+
+[source]
+----
+source/
+├── main.c               Einstiegspunkt, Testsequenzen
+├── platform.h           Takt-Konfigurationen, Fehlercodes, Debug-Makros
+├── globals.h            Globaler Motorzustand und Timer-Parameter
+├── control/             Roboter-Steuerlogik
+│   ├── control.c/h      Zentraler Befehls-Dispatcher
+│   ├── motor/           Schrittmotor-Treiber
+│   ├── sensor/          Endschalter-Sensoren
+│   └── coil/            Elektromagnet-Steuerung
+├── com/                 Kommunikation
+│   ├── uart2.c/h        UART2-Treiber (115200 Baud)
+│   └── term.c/h         Terminal-Befehlshandler
+└── utils/               Hilfsfunktionen
+    ├── ftm0.c/h         FTM0-Timer (Schrittimpuls-Erzeugung)
+    ├── wait.c/h         Verzögerungsfunktionen
+    └── debug.c/h        Debug-Hilfsfunktionen
+----
+
+=== Modulverantwortlichkeiten
+
+[cols="2,5"]
+|===
+| Modul | Verantwortlichkeit
+
+| `control` | Initialisiert alle Subsysteme; leitet empfangene Befehle an Motor-, Spulen- und Sensormodule weiter
+| `motor` | Erzeugt präzise Schrittimpulse über FTM0-Interrupt-Kanäle; verwaltet Rampenprofile und Überlauf
+| `calculation` | Wandelt die gewünschte Roboterposition in einzelne Achsen-Schrittzahlen um (Kinematik)
+| `sensor` | Liest den Endschalter-Zustand an PC8, PC9, PC10 für die Referenzfahrt
+| `coil` | Schaltet den Elektromagneten an PD0
+| `term` | Parst UART-Befehle und leitet sie an registrierte Handler weiter
+| `ftm0` | Konfiguriert FTM0-Kanäle und bedient ISRs für die Schritt-Zeitmessung
+|===
+
+=== Kompilierzeit-Konfigurationsflags
+
+Definiert in `globals.h`:
+
+[cols="2,5"]
+|===
+| Flag | Wirkung
+
+| `DEBUG_MODE` | Aktiviert Debug-Pin-Überwachung, deaktiviert die Hauptschleife
+| `TEST_SEQUENCE` | Führt beim Start einen automatisierten Bewegungstest aus (erfordert `DEBUG_MODE`)
+| `RAMP_ACTIVE` | Aktiviert die Motoranlauframpe
+| `RAMP_MODE_PS` | Rampe über Prescaler-Modulation (4 Stufen)
+| `RAMP_MODE_NSTEP` | Rampe über N-Schritt-Profil (Standard: 20 Schritte)
+| `RAMP_MODE_PREMIUM` | Lineare Rampe, in der ISR berechnet
+| `ISR_MONITOR` | Gibt ISR-Timing auf Reserve-Debug-Pins aus
+| `SIM_SENSORS` | Simuliert Sensorsignale, wenn keine Hardware angeschlossen ist
+|===

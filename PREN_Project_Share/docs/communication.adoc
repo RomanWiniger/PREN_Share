@@ -1,0 +1,36 @@
+== Kommunikation
+
+=== UART-Schnittstelle
+
+Der Mikrocontroller kommuniziert mit dem Raspberry Pi über *UART2* mit *115200 Baud*.
+
+Befehle werden als `ReceivedCommand`-Struktur empfangen:
+
+[source,c]
+----
+typedef struct {
+    int32_t Steps1;       // Schrittzahl Achse 1
+    int32_t Steps2;       // Schrittzahl Achse 2
+    int32_t Steps3;       // Schrittzahl Achse 3
+    int32_t StepsRot;     // Schrittzahl Rotationsmotor
+    bool    ActCoil;      // Elektromagnet aktivieren
+    bool    ErrorHandling;// Fehlerbehandlungsmodus aktivieren
+} ReceivedCommand;
+----
+
+=== Befehlssatz
+
+[cols="2,5"]
+|===
+| Befehl | Beschreibung
+
+| `start` | Hauptbetriebsschleife starten
+| `init` | Alle Achsen über Endschalter in die Ausgangsposition fahren
+| `camera` | Kameraaufnahme auslösen
+| `puzzleBegin` | Puzzle-Lösungssequenz starten
+| `puzzleEnd` | Puzzle-Lösungssequenz beenden
+|===
+
+=== Terminal-Handler
+
+`term.c` implementiert einen Befehls-Dispatcher nach dem Registry-Muster. Jeder Befehl registriert eine Handler-Funktion. Beim Empfang eines vollständigen UART-Frames ruft der Dispatcher den passenden Handler auf.

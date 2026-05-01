@@ -1,0 +1,46 @@
+== Erstellen & Flashen
+
+=== Voraussetzungen
+
+* MCUXpresso IDE (NXP) oder arm-none-eabi-gcc Toolchain
+* J-Link oder OpenSDA Debug-Probe
+
+=== Erstellen mit MCUXpresso
+
+1. Projekt importieren: *File → Import → Existing Projects into Workspace*
+2. Das Verzeichnis `PREN_Project_Share` auswählen
+3. Die Build-Konfiguration *Debug* wählen
+4. Auf *Build* klicken (oder `Ctrl+B` drücken)
+
+Das Ausgabe-Artefakt ist `Debug/PREN_Project_Share.axf`.
+
+=== Erstellen über die Kommandozeile
+
+[source,bash]
+----
+cd Debug
+make -j4
+----
+
+=== Flashen & Debuggen
+
+Debug-Probe anschliessen und die integrierte *Debug*-Startkonfiguration von MCUXpresso verwenden, oder über den J-Link Commander flashen:
+
+[source,bash]
+----
+JLinkExe -device MK22FN512xxx12 -if SWD -speed 4000
+> loadfile Debug/PREN_Project_Share.axf
+> r
+> go
+----
+
+=== Debug-Modi
+
+Folgende Flags in `globals.h` vor dem Erstellen setzen:
+
+[source,c]
+----
+#define DEBUG_MODE      1   // Debug-Pin-Ausgabe aktivieren, Hauptschleife deaktivieren
+#define TEST_SEQUENCE   1   // Automatisierten Motortest beim Start ausführen
+#define ISR_MONITOR     1   // Reserve-Pins in ISRs für Timing-Analyse umschalten
+----
