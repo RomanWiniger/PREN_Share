@@ -27,7 +27,9 @@ static void overflowCounter_16bit(uint64_t number, uint16_t* OF_counter, uint16_
 void calcEndPoint(int64_t total_ticks,bool start_state,uint64_t rem_start_ticks,uint64_t highTicks,uint64_t lowTicks,bool* endState,uint64_t* endTicks);
 double scalePercent(uint64_t value, uint64_t percentage);
 void segmentEndState(int64_t total_ticks,bool start_state,uint64_t start_state_ticks,uint64_t other_state_ticks,bool* endState,uint64_t* endTicks);
-void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t endTicks[RAMP_NSTEPS+1],uint64_t pulseTicks[RAMP_NSTEPS+1], uint64_t pauseTicks[RAMP_NSTEPS+1],double factors[RAMP_NSTEPS+1]);
+void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t endTicks[RAMP_NSTEPS+1],
+					uint64_t pulseTicks[RAMP_NSTEPS+1], uint64_t pauseTicks[RAMP_NSTEPS+1],
+					double factors[RAMP_NSTEPS+1],uint64_t pulseOrigin,uint64_t pauseOrigin);
 void resolveOverflows(	uint64_t rem64[RAMP_NSTEPS+1],uint64_t pulse64[RAMP_NSTEPS+1], uint64_t pause64[RAMP_NSTEPS+1],
 					uint16_t rem16[RAMP_NSTEPS+1],uint16_t pulse16[RAMP_NSTEPS+1], uint16_t pause16[RAMP_NSTEPS+1],
 					uint16_t remOF[RAMP_NSTEPS+1],uint16_t pulseOF[RAMP_NSTEPS+1], uint16_t pauseOF[RAMP_NSTEPS+1]);
@@ -68,17 +70,27 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 	//////////////////////////////////////////////////////////////////
 		if (Mot1>=Mot2 && Mot1>=Mot3){
 			mostMotor=1;
+			#if RAMP_MODE_NSTEP
+	    		Motor1_Pause_Full = MOTOR_MINPAUSE_MOD_TICK;
+			#endif
 			tmp_M1_Pause = MOTOR_MINPAUSE_MOD_TICK;
 			totalTicks=((int64_t)tmp_M1_Pause +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot1;
 
 		}else{
 			if (Mot2>=Mot1 && Mot2>=Mot3){
 				mostMotor=2;
+				#if RAMP_MODE_NSTEP
+					Motor2_Pause_Full = MOTOR_MINPAUSE_MOD_TICK;
+				#endif
+
 				tmp_M2_Pause = MOTOR_MINPAUSE_MOD_TICK;
 				totalTicks=((int64_t)MOTOR_MINPAUSE_MOD_TICK +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot2;
 			}else{
 				if (Mot3>=Mot2 && Mot3>=Mot1){
 						mostMotor=3;
+						#if RAMP_MODE_NSTEP
+							Motor3_Pause_Full = MOTOR_MINPAUSE_MOD_TICK;
+						#endif
 						tmp_M3_Pause = MOTOR_MINPAUSE_MOD_TICK;
 						totalTicks=((int64_t)MOTOR_MINPAUSE_MOD_TICK +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot3;
 				}else{
@@ -94,6 +106,9 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		if (mostMotor != 1 && Mot1!=0){
 			totalTicksPauseM1 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot1);
 			tmp_M1_Pause = totalTicksPauseM1 / Mot1;
+			#if RAMP_MODE_NSTEP
+				Motor1_Pause_Full=tmp_M1_Pause;
+			#endif
 			errorStepperM1 = totalTicks - ((tmp_M1_Pause +MOTOR_PULSE_MOD_TICK)*Mot1);
 			if(errorStepperM1>0){
 				Motor1_Step_Corrector[0] = (Mot1/errorStepperM1)+1;				// Round up to omit overshoot
@@ -110,6 +125,9 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		if (mostMotor != 2 && Mot2!=0){
 			totalTicksPauseM2 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot2);
 			tmp_M2_Pause = totalTicksPauseM2 / Mot2;
+			#if RAMP_MODE_NSTEP
+				Motor2_Pause_Full=tmp_M2_Pause;
+			#endif
 			errorStepperM2 = totalTicks - ((tmp_M2_Pause +MOTOR_PULSE_MOD_TICK)*Mot2);
 			if(errorStepperM2>0){
 				Motor2_Step_Corrector[0] = (Mot2/errorStepperM2)+1;				// Round up to omit overshoot
@@ -126,6 +144,9 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		if (mostMotor != 3 && Mot3!=0){
 			totalTicksPauseM3 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot3);
 			tmp_M3_Pause = totalTicksPauseM3 / Mot3;
+			#if RAMP_MODE_NSTEP
+				Motor3_Pause_Full=tmp_M3_Pause;
+			#endif
 			errorStepperM3 = totalTicks - ((tmp_M3_Pause +MOTOR_PULSE_MOD_TICK)*Mot3);
 			if(errorStepperM3>0){
 				Motor3_Step_Corrector[0] = (Mot3/errorStepperM3)+1;				// Round up to omit overshoot
@@ -138,6 +159,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 			}
 		}
 		if(Mot3==0){tmp_M3_Pause =0;}
+
 
 #if RAMP_MODE_PREMIUM
 		calcPremiumRamp(Mot1,Mot2,Mot3,tmp_M1_Pause,tmp_M2_Pause,tmp_M3_Pause,mostMotor);
@@ -328,7 +350,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		///  MOTOR 1
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M1_Start_State, tmp_m1_ticks_init,tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks, Ramp_Segment_factor);
+		analyzeSegment(Ramp_M1_Start_State, tmp_m1_ticks_init,tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor1_Pause_Full);
 		resolveOverflows(tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks,Ramp_M1_End_Rem_Ticks ,Ramp_M1_Pulse_Ticks,Ramp_M1_Pause_Ticks,Ramp_M1_End_Rem_Ticks_OF,Ramp_M1_Pulse_Ticks_OF,Ramp_M1_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M1_Rem_Pending,Ramp_M1_End_Rem_Ticks);
 
@@ -336,7 +358,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		///  MOTOR 2
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M2_Start_State,tmp_m2_ticks_init,tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks, Ramp_Segment_factor);
+		analyzeSegment(Ramp_M2_Start_State,tmp_m2_ticks_init,tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor2_Pause_Full);
 		resolveOverflows(tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks,Ramp_M2_End_Rem_Ticks ,Ramp_M2_Pulse_Ticks,Ramp_M2_Pause_Ticks,Ramp_M2_End_Rem_Ticks_OF,Ramp_M2_Pulse_Ticks_OF,Ramp_M2_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M2_Rem_Pending,Ramp_M2_End_Rem_Ticks);
 
@@ -344,7 +366,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		///  MOTOR 3
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M3_Start_State,tmp_m3_ticks_init,tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks, Ramp_Segment_factor);
+		analyzeSegment(Ramp_M3_Start_State,tmp_m3_ticks_init,tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor3_Pause_Full);
 		resolveOverflows(tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks,Ramp_M3_End_Rem_Ticks ,Ramp_M3_Pulse_Ticks,Ramp_M3_Pause_Ticks,Ramp_M3_End_Rem_Ticks_OF,Ramp_M3_Pulse_Ticks_OF,Ramp_M3_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M3_Rem_Pending,Ramp_M3_End_Rem_Ticks);
 #endif
@@ -392,14 +414,16 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 #if RAMP_MODE_NSTEP
 		// Set Initial Pause Value
 		if(Mot1 !=0){
-			if(mostMotor==1){FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(1000);}
+			FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD;
 		}
 		if(Mot2 !=0){
-			if(mostMotor==2){FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(1000);}
+			FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD;
 		}
 		if(Mot3!=0){
-			if(mostMotor==3){FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(1000);}
+			FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD;
 		}
+
+		FTM0->CONTROLS[6].CnV=RAMP_NSTEPS_FIRST_MOD;
 #endif
 		//////////////////////////////////////////////////////////////////
 		///  SET OUTPUTS TO GLOBALS
@@ -545,21 +569,21 @@ static void calcLinearRamp(int32_t Mot1,int32_t Mot2, int32_t Mot3,int64_t pause
 #endif
 
 #if RAMP_MODE_NSTEP
-void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t endTicks[RAMP_NSTEPS+1],uint64_t pulseTicks[RAMP_NSTEPS+1], uint64_t pauseTicks[RAMP_NSTEPS+1],double factors[RAMP_NSTEPS+1]){
+void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t endTicks[RAMP_NSTEPS+1],uint64_t pulseTicks[RAMP_NSTEPS+1], uint64_t pauseTicks[RAMP_NSTEPS+1],double factors[RAMP_NSTEPS+1],uint64_t pulseOrigin,uint64_t pauseOrigin){
 	//First Segment
 	endTicks[0]=initTicks;
-	calcEndPoint(RAMP_NSTEPS_STEPS,startState[1],endTicks[0],MOTOR_PULSE_MOD_TICK,MOTOR_MINPAUSE_MOD_TICK,&startState[2],&endTicks[1]);
+	calcEndPoint(RAMP_NSTEPS_STEPS,startState[1],endTicks[0],pulseOrigin,pauseOrigin,&startState[2],&endTicks[1]);
 
 	//Any further segment
 	for(int i=2;i<=RAMP_NSTEPS;i++){
-		calcEndPoint(RAMP_NSTEPS_STEPS,startState[i],endTicks[i-1],MOTOR_PULSE_MOD_TICK,MOTOR_MINPAUSE_MOD_TICK,&startState[i+1],&endTicks[i]);
+		calcEndPoint(RAMP_NSTEPS_STEPS,startState[i],endTicks[i-1],pulseOrigin,pauseOrigin,&startState[i+1],&endTicks[i]);
 	}
 
 	// Scale-Up each Segment
 	for(int i=0;i<=RAMP_NSTEPS;i++){
         endTicks[i]   *= factors[i];
-        pulseTicks[i] = MOTOR_PULSE_MOD_TICK * factors[i];
-        pauseTicks[i] = MOTOR_MINPAUSE_MOD_TICK * factors[i];
+        pulseTicks[i] = pulseOrigin * factors[i];
+        pauseTicks[i] = pauseOrigin * factors[i];
 	}
 }
 #endif

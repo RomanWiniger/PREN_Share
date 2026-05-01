@@ -68,13 +68,17 @@ double Ramp_Factor_current =1;
 #endif
 
 #if RAMP_MODE_NSTEP
-	uint16_t Ramp_Step_Curr=1;
+	int64_t Motor1_Pause_Full=0;
+	int64_t Motor2_Pause_Full=0;
+	int64_t Motor3_Pause_Full=0;
+
+	uint16_t Ramp_Step_Curr=0;	// first ISR sets to step
 	uint16_t Ramp_Step_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_Step_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_Step_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 
 	bool Ramp_M1_Start_State[RAMP_NSTEPS+1]={false};
-	bool Ramp_M1_Rem_Pending[RAMP_NSTEPS+1]={true,true,true,true,true,true,true,true,true,true,true};
+	bool Ramp_M1_Rem_Pending[RAMP_NSTEPS+1]={false};
 	uint16_t Ramp_M1_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M1_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
@@ -86,7 +90,7 @@ double Ramp_Factor_current =1;
 	uint16_t Ramp_M1_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 
 	bool Ramp_M2_Start_State[RAMP_NSTEPS+1]={false};
-	bool Ramp_M2_Rem_Pending[RAMP_NSTEPS+1]={true,true,true,true,true,true,true,true,true,true,true};
+	bool Ramp_M2_Rem_Pending[RAMP_NSTEPS+1]={false};
 	uint16_t Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M2_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
@@ -98,7 +102,7 @@ double Ramp_Factor_current =1;
 	uint16_t Ramp_M2_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 
 	bool Ramp_M3_Start_State[RAMP_NSTEPS+1]={false};
-	bool Ramp_M3_Rem_Pending[RAMP_NSTEPS+1]={true,true,true,true,true,true,true,true,true,true,true};
+	bool Ramp_M3_Rem_Pending[RAMP_NSTEPS+1]={false};
 	uint16_t Ramp_M3_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M3_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};

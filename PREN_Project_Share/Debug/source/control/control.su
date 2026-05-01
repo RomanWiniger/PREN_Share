@@ -1,3 +1,3 @@
-../source/control/control.c:137:6:controlInit	8	static
-../source/control/control.c:148:6:newCommand	8	static
-../source/control/control.c:177:6:clkGating	4	static
+../source/control/control.c:141:6:controlInit	8	static
+../source/control/control.c:152:6:newCommand	8	static
+../source/control/control.c:181:6:clkGating	4	static

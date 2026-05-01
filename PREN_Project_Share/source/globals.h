@@ -11,6 +11,7 @@
 #define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
 #define SIM_SENSORS			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #define ISR_MONITOR			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
+#define DEBUG_MODE_SEQ		1	// Debug Channel 6 Sequence Incrementer
 
 
 //////////////////////////////////////////////////////Te
@@ -91,10 +92,10 @@
 	#define RAMP_DIV3			2	// PRESCALER MODE: Divider for Stepnumber for 3. Ramp part
 
     #define RAMP_NSTEPS				20		// NSTEP MODE: Number of Steps in Ramp (min. 2)
-    #define RAMP_NSTEPS_STEPS		3000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)
+    #define RAMP_NSTEPS_STEPS		20000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)
     #define RAMP_NSTEPS_STEP_PERC	20		// NSTEP MODE: Inrease Time per Step [%]
     #define RAMP_NSTEPS_STEP_VAR	0		// Unused
-
+	#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
 #endif
 
 #if RAMP_MODE_PREMIUM
@@ -109,6 +110,9 @@
 extern bool M1_Step;
 extern bool M2_Step;
 extern bool M3_Step;
+extern int64_t Motor1_Pause_Full;
+extern int64_t Motor2_Pause_Full;
+extern int64_t Motor3_Pause_Full;
 extern int32_t Motor1_Step_Curr;
 extern int32_t Motor2_Step_Curr;
 extern int32_t Motor3_Step_Curr;
@@ -168,6 +172,11 @@ extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tic
 #endif
 
 #if RAMP_MODE_NSTEP
+
+	extern int64_t Motor1_Pause_Full;
+	extern int64_t Motor2_Pause_Full;
+	extern int64_t Motor3_Pause_Full;
+
 	extern uint16_t Ramp_Step_Curr;
 	extern uint16_t Ramp_Step_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_Step_Ticks_OF[RAMP_NSTEPS+1];

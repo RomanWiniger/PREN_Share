@@ -23,6 +23,7 @@
 #include "globals.h"
 #include "sensor_config.h"
 #include "reserve_pin_config.h"
+#include <string.h> // für memset für Array mit true Initialisierung
 
 void resetMoveTimers(void);
 void resetRotTimers(void);
@@ -54,6 +55,12 @@ void motorInit(void){
 	FTM0->CONTROLS[6].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0) ; // Ramp Sequence Incrementer
 #endif
 
+#if RAMP_MODE_NSTEP
+	memset(Ramp_M1_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
+	memset(Ramp_M2_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
+	memset(Ramp_M3_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
+
+#endif
 
 #if ENABLE_STEP
 
@@ -276,7 +283,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 		if (ramp_mode < 4){
 			if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
 			if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
-			if(mostMotor ==3){tmp_steps = Motor3_Step_Curr;}
+			if(mostMotor ==3){tgmp_steps = Motor3_Step_Curr;}
 
 			if (ramp_mode ==0){
 				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV1)){
@@ -447,6 +454,14 @@ void initGlobalsMove(void){
 	Motor1_Step_OF_Curr =0;
 	Motor2_Step_OF_Curr =0;
 	Motor3_Step_OF_Curr =0;
+
+#if RAMP_MODE_NSTEP
+	memset(Ramp_M1_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
+	memset(Ramp_M2_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
+	memset(Ramp_M3_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
+
+	Ramp_Step_Curr=0;
+#endif
 
 	for (int i = 0; i < NUM_CORRECTOR_LOOPS; i++) { //
 	    Motor1_Step_Corrector[i] = 0;

@@ -29,7 +29,7 @@
 #define RES2_REG					12		// USR Config
 #define RES2_PORT					A		// USR Config
 #define RES2_PULL_ENABLE			(1) 	// USR Config		// 1 = Enable, 0 = Disable
-#define RES2_PULLUP					(1) 	// USR Config		// 1 = Pullup, 0 = Pulldown
+#define RES2_PULLUP					(0) 	// USR Config		// 1 = Pullup, 0 = Pulldown
 #define RES2_DSE					(1) 	// USR Config		// 1 = Drive Strength enable , 0 = off
 #define RES2_PORT_NAME 				PORT_MKR(RES2_PORT)
 #define RES2_GPIO_NAME 				GPIO_MKR(RES2_PORT)
@@ -42,7 +42,7 @@
 #define RES3_REG					1		// USR Config
 #define RES3_PORT					D		// USR Config
 #define RES3_PULL_ENABLE			(1) 	// USR Config		// 1 = Enable, 0 = Disable
-#define RES3_PULLUP					(1) 	// USR Config		// 1 = Pullup, 0 = Pulldown
+#define RES3_PULLUP					(0) 	// USR Config		// 1 = Pullup, 0 = Pulldown
 #define RES3_DSE					(1) 	// USR Config		// 1 = Drive Strength enable , 0 = off
 #define RES3_PORT_NAME 				PORT_MKR(RES3_PORT)
 #define RES3_GPIO_NAME 				GPIO_MKR(RES3_PORT)
