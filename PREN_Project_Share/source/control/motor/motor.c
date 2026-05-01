@@ -50,6 +50,9 @@ void motorInit(void){
 	#if ENABLE_ROT
 		FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0) ;
 	#endif
+#if RAMP_MODE_NSTEP
+	FTM0->CONTROLS[6].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0) ; // Ramp Sequence Incrementer
+#endif
 
 
 #if ENABLE_STEP
@@ -95,8 +98,11 @@ void motorInit(void){
 	MOTOR2_EN_SET_OUTPUT();
 	MOTOR3_EN_SET_OUTPUT();
 #endif
+#if !SIM_SENSORS	// for debugging withour Sensors
 	moveToInitPos(1000);
+#endif
 }
+
 
 void moveToInitPos(uint32_t toggle_US){
 	bool m1_run = true; 	// Debouce
@@ -227,9 +233,15 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 	FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
+#if RAMP_MODE_NSTEP
+	FTM0->CONTROLS[6].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
+#endif
 	if(mot1_Abs!=0){FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 	if(mot2_Abs!=0){FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 	if(mot3_Abs!=0){FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
+#if RAMP_MODE_NSTEP
+	FTM0->CONTROLS[6].CnSC |= FTM_CnSC_CHIE(1); //Ramp Sequence incrementer
+#endif
 
 
 	//////////////////////////////////////////////////////////////////

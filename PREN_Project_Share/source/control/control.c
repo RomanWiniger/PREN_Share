@@ -68,22 +68,47 @@ double Ramp_Factor_current =1;
 #endif
 
 #if RAMP_MODE_NSTEP
-	int64_t Ramp_Ticks[RAMP_NSTEPS] = {0};		// Array wirh Ticks per Ramp Step
-	bool Ramp_Start_State[RAMP_NSTEPS] = {false};			//true = Pulse false )
-	bool Ramp_End_State[RAMP_NSTEPS] = {false};			//true = Pulse false )
-	int64_t Tamp_End_Rem_Ticks[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pause_Ticks_Init[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pause_Ticks_Init_OF[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pause_Ticks_Init_OF_Curr[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pause_Ticks[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pause_Ticks_OF[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pause_Ticks_OF_Curr[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pulse_Ticks_Init[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pulse_Ticks_Init_OF[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pulse_Ticks_Init_OF_Curr[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pulse_Ticks[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pulse_Ticks_OF[RAMP_NSTEPS] = {0};			//true = Pulse false )
-	uint16_t Ramp_Pulse_Ticks_OF_Curr[RAMP_NSTEPS] = {0};			//true = Pulse false )
+	uint16_t Ramp_Step_Curr=1;
+	uint16_t Ramp_Step_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_Step_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_Step_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+
+	bool Ramp_M1_Start_State[RAMP_NSTEPS+1]={false};
+	bool Ramp_M1_Rem_Pending[RAMP_NSTEPS+1]={true,true,true,true,true,true,true,true,true,true,true};
+	uint16_t Ramp_M1_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M1_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M1_Pause_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M1_Pause_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M1_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M1_Pulse_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M1_Pulse_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M1_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+
+	bool Ramp_M2_Start_State[RAMP_NSTEPS+1]={false};
+	bool Ramp_M2_Rem_Pending[RAMP_NSTEPS+1]={true,true,true,true,true,true,true,true,true,true,true};
+	uint16_t Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_Pause_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_Pause_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_Pulse_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_Pulse_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+
+	bool Ramp_M3_Start_State[RAMP_NSTEPS+1]={false};
+	bool Ramp_M3_Rem_Pending[RAMP_NSTEPS+1]={true,true,true,true,true,true,true,true,true,true,true};
+	uint16_t Ramp_M3_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_Pause_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_Pause_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_Pulse_Ticks[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_Pulse_Ticks_OF[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+
 #endif
 
 #if DEBUG

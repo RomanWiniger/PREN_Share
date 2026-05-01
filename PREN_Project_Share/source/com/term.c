@@ -17,7 +17,7 @@
 #include "util.h"
 #include "control.h"
 #include <stdlib.h>
-
+#include "motor.h"
 
 typedef enum
 {
@@ -256,7 +256,7 @@ static tError cameraHandler(const char *args)
 
 static tError puzzleBeginHandler(const char *args)
 {
-	MoveToInitPos(1000);
+	moveToInitPos(1000);
     return EC_SUCCESS;
 }
 
@@ -265,8 +265,6 @@ static tError puzzleEndHandler(const char *args)
     termWriteLine("FINISH");
     return EC_SUCCESS;
 }
-
-
 
 
 void commandInit(){
