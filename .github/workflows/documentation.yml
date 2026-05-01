@@ -27,7 +27,7 @@ jobs:
           pdf_build: true
           asciidoctor_params: --attribute=pdf-theme=pdf-theme.yml
           # adoc_file_ext: .ascii # default is .adoc
-          source_dir: docs/
+          source_dir: PREN_Project_Share/docs/
           # slides_build: true
           # pre_build:
           # post_build:
