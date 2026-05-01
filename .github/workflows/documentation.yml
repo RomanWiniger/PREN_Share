@@ -25,7 +25,7 @@ jobs:
         uses: manoelcampos/asciidoctor-ghpages-action@v2
         with:
           pdf_build: true
-          asciidoctor_params: --attribute=pdf-theme=pdf-theme.yml
+          ebook_main_adoc_file: index
           # adoc_file_ext: .ascii # default is .adoc
           source_dir: PREN_Project_Share/docs/
           # slides_build: true
