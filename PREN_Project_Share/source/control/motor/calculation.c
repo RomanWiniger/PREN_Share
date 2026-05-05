@@ -320,7 +320,16 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		for(int i = 0;i<=RAMP_NSTEPS;i++){
 			tmp_Ramp_Segment_ticks=Ramp_Segment_factor[i]*RAMP_NSTEPS_STEPS;
 			overflowCounter_16bit(tmp_Ramp_Segment_ticks,&Ramp_Step_Ticks_OF[i],&Ramp_Step_Ticks[i]);
+			Ramp_Step_Ticks_OF_Curr[i]=Ramp_Step_Ticks_OF[i]; // initialize Overflow Current of Ramp
 		}
+		// Step 0 is skipped: Ramp_Step_Curr is initialised to 1 below.
+		// Do NOT set Ramp_Step_Ticks[0] to a tiny value – the FTM compare
+		// fires on CNT==CnV (exact equality only).  A value smaller than the
+		// ISR execution time causes CNT to overshoot the new CnV, so the match
+		// is missed and the interrupt is delayed by a full 65535-tick wrap.
+		Ramp_Step_Ticks_OF[0]=0;
+		Ramp_Step_Ticks[0]=0;
+
 
 		// Set first Step State of all Motors
 		if (mostMotor == 1){
@@ -369,6 +378,19 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		analyzeSegment(Ramp_M3_Start_State,tmp_m3_ticks_init,tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor3_Pause_Full);
 		resolveOverflows(tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks,Ramp_M3_End_Rem_Ticks ,Ramp_M3_Pulse_Ticks,Ramp_M3_Pause_Ticks,Ramp_M3_End_Rem_Ticks_OF,Ramp_M3_Pulse_Ticks_OF,Ramp_M3_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M3_Rem_Pending,Ramp_M3_End_Rem_Ticks);
+
+		// Pre-load all _OF_Curr arrays from _OF so ISR decrements never corrupt the reset values.
+		for(int i = 0; i <= RAMP_NSTEPS; i++){
+			Ramp_M1_Pulse_Ticks_OF_Curr[i]    = Ramp_M1_Pulse_Ticks_OF[i];
+			Ramp_M1_Pause_Ticks_OF_Curr[i]    = Ramp_M1_Pause_Ticks_OF[i];
+			Ramp_M1_End_Rem_Ticks_OF_Curr[i]  = Ramp_M1_End_Rem_Ticks_OF[i];
+			Ramp_M2_Pulse_Ticks_OF_Curr[i]    = Ramp_M2_Pulse_Ticks_OF[i];
+			Ramp_M2_Pause_Ticks_OF_Curr[i]    = Ramp_M2_Pause_Ticks_OF[i];
+			Ramp_M2_End_Rem_Ticks_OF_Curr[i]  = Ramp_M2_End_Rem_Ticks_OF[i];
+			Ramp_M3_Pulse_Ticks_OF_Curr[i]    = Ramp_M3_Pulse_Ticks_OF[i];
+			Ramp_M3_Pause_Ticks_OF_Curr[i]    = Ramp_M3_Pause_Ticks_OF[i];
+			Ramp_M3_End_Rem_Ticks_OF_Curr[i]  = Ramp_M3_End_Rem_Ticks_OF[i];
+		}
 #endif
 
 #if !RAMP_MODE_NSTEP
@@ -412,18 +434,22 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 #endif
 
 #if RAMP_MODE_NSTEP
+		// Start at step 1 so the first CH6 firing uses Ramp_Step_Ticks[1] (large
+		// enough that CnV += N never overshoots CNT inside the ISR).
+		Ramp_Step_Curr = 1;
+
 		// Set Initial Pause Value
 		if(Mot1 !=0){
-			FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD;
+			FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD+100;
 		}
 		if(Mot2 !=0){
-			FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD;
+			FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD+100;
 		}
 		if(Mot3!=0){
-			FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD;
+			FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV =RAMP_NSTEPS_FIRST_MOD+100;
 		}
 
-		FTM0->CONTROLS[6].CnV=RAMP_NSTEPS_FIRST_MOD;
+		FTM0->CONTROLS[6].CnV=RAMP_NSTEPS_FIRST_MOD; // earliest ISR -> will set CHnV for Motors above
 #endif
 		//////////////////////////////////////////////////////////////////
 		///  SET OUTPUTS TO GLOBALS
@@ -696,6 +722,7 @@ void resolveOverflows(	uint64_t rem64[RAMP_NSTEPS+1],uint64_t pulse64[RAMP_NSTEP
  *   modulo: rest number after last overflow occured
  */
 static void overflowCounter_16bit(uint64_t number, uint16_t* OF_counter, uint16_t* modulo){
+	(*OF_counter)=0; //init with zero
 	do{		// If Modulo Overflow: Count how many INT16_MAX Overflows occur
 		if (number>=UINT16_MAX){
 			number-=UINT16_MAX;

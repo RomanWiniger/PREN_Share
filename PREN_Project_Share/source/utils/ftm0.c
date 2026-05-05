@@ -17,6 +17,7 @@
 #include "motor_config.h"
 #if DEBUG_MODE
 	#include "reserve_pin_config.h"
+	#include "wait.h"
 #endif
 
 /**
@@ -145,7 +146,7 @@ void FTM0CH0_IRQHandler(void){
 void FTM0CH1_IRQHandler(void){
 	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
-#if DEBUG_MODE
+#if DEBUG_MODE_ISR1
 	RES1_GPIO_HIGH(); // Monitoring ISR-Time
 #endif
 
@@ -154,42 +155,27 @@ void FTM0CH1_IRQHandler(void){
 	static bool ramp_motor_state; // true = high
 
 if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
-	if(Ramp_M1_Rem_Pending[Ramp_Step_Curr]){ // if True: Remaining Start  Ticks to Process (step_curr starts with 1)
-		if(Ramp_M1_End_Rem_Ticks[Ramp_Step_Curr-1]>0){	// First Pass
-			FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV+= Ramp_M1_End_Rem_Ticks[Ramp_Step_Curr];
-			Ramp_M1_End_Rem_Ticks[Ramp_Step_Curr-1]=0;
-			if(Ramp_Step_Curr>0){	// if not in Step 1: Toggle Pin
-				if(ramp_motor_state){ //Todo: Overflow Handling?
-					MOTOR1_STEP_GPIO_LOW();
-					ramp_motor_state=false;
-				}else{
-					MOTOR1_STEP_GPIO_HIGH();
-					ramp_motor_state=true;
-				}
-			}
+	if(Ramp_M1_Rem_Pending[Ramp_Step_Curr]){
+		// CnV was already set to cnt_now + End_Rem_Ticks[N] in CH6. Drain overflow periods, then start at Start_State.
+		if(Ramp_M1_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1] > 0){
+			Ramp_M1_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1]--;
 		}else{
-			if(Ramp_M1_End_Rem_Ticks_OF[Ramp_Step_Curr]>0){ // Initial Overflow
-				// Leave ChV with the current value
-				Ramp_M1_End_Rem_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M1_Rem_Pending[Ramp_Step_Curr]=false;
+			if(Ramp_M1_Start_State[Ramp_Step_Curr]==false){
+				MOTOR1_STEP_GPIO_HIGH();
+				FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV += Ramp_M1_Pulse_Ticks[Ramp_Step_Curr];
+				ramp_motor_state=true;
+				Motor1_Step_Curr +=1;
 			}else{
-				Ramp_M1_Rem_Pending[Ramp_Step_Curr]=false;
-				if(Ramp_M1_Start_State[Ramp_Step_Curr]==false){
-					MOTOR1_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV  += Ramp_M1_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
-					ramp_motor_state=true;
-				}
-				else{
-					MOTOR1_STEP_GPIO_LOW();
-					FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV  += Ramp_M1_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
-					ramp_motor_state=true;
-					Motor1_Step_Curr +=1;
-				}
+				MOTOR1_STEP_GPIO_LOW();
+				FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV += Ramp_M1_Pause_Ticks[Ramp_Step_Curr];
+				ramp_motor_state=false;
 			}
 		}
 	}else if(ramp_motor_state){ // If State is true: 	Output is high
-		if(Ramp_M1_Pulse_Ticks_OF[Ramp_Step_Curr]>0){
+		if(Ramp_M1_Pulse_Ticks_OF_Curr[Ramp_Step_Curr]>0){
 			// Leave ChV with the current value
-			Ramp_M1_Pulse_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M1_Pulse_Ticks_OF_Curr[Ramp_Step_Curr]--;
 		}else{
 			MOTOR1_STEP_GPIO_LOW();
 			FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV  += Ramp_M1_Pause_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
@@ -197,9 +183,9 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Ramp_M1_Pulse_Ticks_OF_Curr[Ramp_Step_Curr] = Ramp_M1_Pulse_Ticks_OF[Ramp_Step_Curr];	// Restart Overflow counter
 		}
 	}else{ // If State is false: 	Output is low
-		if(Ramp_M1_Pause_Ticks_OF[Ramp_Step_Curr]>0){
+		if(Ramp_M1_Pause_Ticks_OF_Curr[Ramp_Step_Curr]>0){
 			// Leave ChV with the current value
-			Ramp_M1_Pause_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M1_Pause_Ticks_OF_Curr[Ramp_Step_Curr]--;
 		}else{
 			MOTOR1_STEP_GPIO_HIGH();
 			FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV  += Ramp_M1_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pause
@@ -211,6 +197,10 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 
 }else{		// Ramp is done
 #endif
+	// Drain any End_Rem_Ticks overflow periods before switching to full speed.
+	if(Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] > 0){
+		Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS]--;
+	}else{
 	// If Mx_Step is false: 	Output was high before
 		if (MOTOR1_STEP_STATUS()){
 			MOTOR1_STEP_GPIO_LOW();									// Output was toggled to true in the current ISR
@@ -247,12 +237,13 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
+	} // end overflow drain else
 
 #if RAMP_MODE_NSTEP
 }
 #endif
 
-#if DEBUG_MODE
+#if DEBUG_MODE_ISR1
 		RES1_GPIO_LOW(); // Monitoring ISR-Time
 #endif
 }
@@ -260,7 +251,7 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 void FTM0CH2_IRQHandler(void){
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
-#if DEBUG_MODE
+#if DEBUG_MODE_ISR2
 	RES1_GPIO_HIGH(); // Monitoring ISR-Time
 #endif
 
@@ -269,42 +260,26 @@ void FTM0CH2_IRQHandler(void){
 	static bool ramp_motor_state; // true = high
 
 if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
-	if(Ramp_M2_Rem_Pending[Ramp_Step_Curr]){ // if True: Remaining Start  Ticks to Process (step_curr starts with 1)
-		if(Ramp_M2_End_Rem_Ticks[Ramp_Step_Curr-1]>0){	// First Pass
-			FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV+= Ramp_M2_End_Rem_Ticks[Ramp_Step_Curr];
-			Ramp_M2_End_Rem_Ticks[Ramp_Step_Curr-1]=0;
-			if(Ramp_Step_Curr>0){	// if not in Step 1: Toggle Pin
-				if(ramp_motor_state){ //Todo: Overflow Handling?
-					MOTOR2_STEP_GPIO_LOW();
-					ramp_motor_state=false;
-				}else{
-					MOTOR2_STEP_GPIO_HIGH();
-					ramp_motor_state=true;
-				}
-			}
+	if(Ramp_M2_Rem_Pending[Ramp_Step_Curr]){
+		if(Ramp_M2_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1] > 0){
+			Ramp_M2_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1]--;
 		}else{
-			if(Ramp_M2_End_Rem_Ticks_OF[Ramp_Step_Curr]>0){ // Initial Overflow
-				// Leave ChV with the current value
-				Ramp_M2_End_Rem_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M2_Rem_Pending[Ramp_Step_Curr]=false;
+			if(Ramp_M2_Start_State[Ramp_Step_Curr]==false){
+				MOTOR2_STEP_GPIO_HIGH();
+				FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV += Ramp_M2_Pulse_Ticks[Ramp_Step_Curr];
+				ramp_motor_state=true;
+				Motor2_Step_Curr +=1;
 			}else{
-				Ramp_M2_Rem_Pending[Ramp_Step_Curr]=false;
-				if(Ramp_M2_Start_State[Ramp_Step_Curr]==false){
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV  += Ramp_M2_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
-					ramp_motor_state=true;
-				}
-				else{
-					MOTOR2_STEP_GPIO_LOW();
-					FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV  += Ramp_M2_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
-					ramp_motor_state=true;
-					Motor2_Step_Curr +=1;
-				}
+				MOTOR2_STEP_GPIO_LOW();
+				FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV += Ramp_M2_Pause_Ticks[Ramp_Step_Curr];
+				ramp_motor_state=false;
 			}
 		}
 	}else if(ramp_motor_state){ // If State is true: 	Output is high
-		if(Ramp_M2_Pulse_Ticks_OF[Ramp_Step_Curr]>0){
+		if(Ramp_M2_Pulse_Ticks_OF_Curr[Ramp_Step_Curr]>0){
 			// Leave ChV with the current value
-			Ramp_M2_Pulse_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M2_Pulse_Ticks_OF_Curr[Ramp_Step_Curr]--;
 		}else{
 			MOTOR2_STEP_GPIO_LOW();
 			FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV  += Ramp_M2_Pause_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
@@ -312,9 +287,9 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Ramp_M2_Pulse_Ticks_OF_Curr[Ramp_Step_Curr] = Ramp_M2_Pulse_Ticks_OF[Ramp_Step_Curr];	// Restart Overflow counter
 		}
 	}else{ // If State is false: 	Output is low
-		if(Ramp_M2_Pause_Ticks_OF[Ramp_Step_Curr]>0){
+		if(Ramp_M2_Pause_Ticks_OF_Curr[Ramp_Step_Curr]>0){
 			// Leave ChV with the current value
-			Ramp_M2_Pause_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M2_Pause_Ticks_OF_Curr[Ramp_Step_Curr]--;
 		}else{
 			MOTOR2_STEP_GPIO_HIGH();
 			FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV  += Ramp_M2_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pause
@@ -325,8 +300,10 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 	}
 
 }else{		// Ramp is done
-
 #endif
+	if(Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] > 0){
+		Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS]--;
+	}else{
 	// If Mx_Step is true: 	Output was high before
 		if (MOTOR2_STEP_STATUS()){
 			MOTOR2_STEP_GPIO_LOW();
@@ -412,11 +389,12 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Motor2_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
+	} // end overflow drain else
 
 #if RAMP_MODE_NSTEP
 }
 #endif
-#if DEBUG_MODE
+#if DEBUG_MODE_ISR2
 		RES1_GPIO_LOW(); // Monitoring ISR-Time
 #endif
 }
@@ -424,7 +402,7 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 void FTM0CH4_IRQHandler(void){
 	FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
-#if DEBUG_MODE
+#if DEBUG_MODE_ISR3
 	RES1_GPIO_HIGH(); // Monitoring ISR-Time
 #endif
 
@@ -433,42 +411,26 @@ void FTM0CH4_IRQHandler(void){
 	static bool ramp_motor_state; // true = high
 
 if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
-	if(Ramp_M3_Rem_Pending[Ramp_Step_Curr]){ // if True: Remaining Start  Ticks to Process (step_curr starts with 1)
-		if(Ramp_M3_End_Rem_Ticks[Ramp_Step_Curr-1]>0){	// First Pass
-			FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV+= Ramp_M3_End_Rem_Ticks[Ramp_Step_Curr];
-			Ramp_M3_End_Rem_Ticks[Ramp_Step_Curr-1]=0;
-			if(Ramp_Step_Curr>0){	// if not in Step 1: Toggle Pin
-				if(ramp_motor_state){ //Todo: Overflow Handling?
-					MOTOR3_STEP_GPIO_LOW();
-					ramp_motor_state=false;
-				}else{
-					MOTOR3_STEP_GPIO_HIGH();
-					ramp_motor_state=true;
-				}
-			}
+	if(Ramp_M3_Rem_Pending[Ramp_Step_Curr]){
+		if(Ramp_M3_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1] > 0){
+			Ramp_M3_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1]--;
 		}else{
-			if(Ramp_M3_End_Rem_Ticks_OF[Ramp_Step_Curr]>0){ // Initial Overflow
-				// Leave ChV with the current value
-				Ramp_M3_End_Rem_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M3_Rem_Pending[Ramp_Step_Curr]=false;
+			if(Ramp_M3_Start_State[Ramp_Step_Curr]==false){
+				MOTOR3_STEP_GPIO_HIGH();
+				FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV += Ramp_M3_Pulse_Ticks[Ramp_Step_Curr];
+				ramp_motor_state=true;
+				Motor3_Step_Curr +=1;
 			}else{
-				Ramp_M3_Rem_Pending[Ramp_Step_Curr]=false;
-				if(Ramp_M3_Start_State[Ramp_Step_Curr]==false){
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV  += Ramp_M3_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
-					ramp_motor_state=true;
-				}
-				else{
-					MOTOR3_STEP_GPIO_LOW();
-					FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV  += Ramp_M3_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
-					ramp_motor_state=true;
-					Motor3_Step_Curr +=1;
-				}
+				MOTOR3_STEP_GPIO_LOW();
+				FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV += Ramp_M3_Pause_Ticks[Ramp_Step_Curr];
+				ramp_motor_state=false;
 			}
 		}
 	}else if(ramp_motor_state){ // If State is true: 	Output is high
-		if(Ramp_M3_Pulse_Ticks_OF[Ramp_Step_Curr]>0){
+		if(Ramp_M3_Pulse_Ticks_OF_Curr[Ramp_Step_Curr]>0){
 			// Leave ChV with the current value
-			Ramp_M3_Pulse_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M3_Pulse_Ticks_OF_Curr[Ramp_Step_Curr]--;
 		}else{
 			MOTOR3_STEP_GPIO_LOW();
 			FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV  += Ramp_M3_Pause_Ticks[Ramp_Step_Curr];	// Set Distance to next Pulse
@@ -476,9 +438,9 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Ramp_M3_Pulse_Ticks_OF_Curr[Ramp_Step_Curr] = Ramp_M3_Pulse_Ticks_OF[Ramp_Step_Curr];	// Restart Overflow counter
 		}
 	}else{ // If State is false: 	Output is low
-		if(Ramp_M3_Pause_Ticks_OF[Ramp_Step_Curr]>0){
+		if(Ramp_M3_Pause_Ticks_OF_Curr[Ramp_Step_Curr]>0){
 			// Leave ChV with the current value
-			Ramp_M3_Pause_Ticks_OF[Ramp_Step_Curr]--;
+			Ramp_M3_Pause_Ticks_OF_Curr[Ramp_Step_Curr]--;
 		}else{
 			MOTOR3_STEP_GPIO_HIGH();
 			FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV  += Ramp_M3_Pulse_Ticks[Ramp_Step_Curr];	// Set Distance to next Pause
@@ -487,8 +449,12 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Ramp_M3_Pause_Ticks_OF_Curr[Ramp_Step_Curr] = Ramp_M3_Pause_Ticks_OF[Ramp_Step_Curr];	// Restart Overflow counter
 		}
 	}
+
 }else{		// Ramp is done
 #endif
+	if(Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] > 0){
+		Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS]--;
+	}else{
 	// If Status is true: 	Output was high before
 		if (MOTOR3_STEP_STATUS()){
 
@@ -526,10 +492,12 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 				Motor3_Step_Curr +=1;							// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 			}
+	} // end overflow drain else
+
 #if RAMP_MODE_NSTEP
 }
 #endif
-#if DEBUG_MODE
+#if DEBUG_MODE_ISR3
 		RES1_GPIO_LOW(); // Monitoring ISR-Time
 #endif
 }
@@ -571,22 +539,52 @@ void FTM0CH6_IRQHandler(void){
 
 	#if DEBUG_MODE_SEQ
 		RES2_GPIO_HIGH(); // Monitoring ISR-Time
+
+		for(int i=0;i<Ramp_Step_Curr;i++){
+			RES2_GPIO_LOW();
+			RES2_GPIO_HIGH();
+		}
 	#endif													// Do not manipulate!!!!!!
 	// INCREMENT OF CURRENT RAMP STEP
 
-	if(Ramp_Step_Curr <= RAMP_NSTEPS){
+
+	if(Ramp_Step_Curr < RAMP_NSTEPS){
 		if(Ramp_Step_Ticks_OF_Curr[Ramp_Step_Curr]>0){
 			// Leave ChV with the current value
 			Ramp_Step_Ticks_OF_Curr[Ramp_Step_Curr]--;
 		}else{
 			FTM0->CONTROLS[6].CnV += (Ramp_Step_Ticks[Ramp_Step_Curr]);	// Set Distance next step edge
-			Ramp_M1_Rem_Pending[Ramp_Step_Curr]=false; // Reset Pending Flags für next Sequence
+			Ramp_M1_Rem_Pending[Ramp_Step_Curr]=false;
 			Ramp_M2_Rem_Pending[Ramp_Step_Curr]=false;
 			Ramp_M3_Rem_Pending[Ramp_Step_Curr]=false;
 			Ramp_Step_Curr +=1;
+
+			// Mid-pause motors: complete remaining pause ticks at new segment's End_Rem rate.
+			// Mid-pulse motors: left alone to finish the pulse naturally (pulses are always short).
+			uint16_t cnt_now = (uint16_t)FTM0->CNT;
+			if(!MOTOR1_STEP_STATUS()){
+				Ramp_M1_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1] = Ramp_M1_End_Rem_Ticks_OF[Ramp_Step_Curr-1];
+				FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = cnt_now + Ramp_M1_End_Rem_Ticks[Ramp_Step_Curr-1];
+				Ramp_M1_Rem_Pending[Ramp_Step_Curr] = true;
+			}
+			if(!MOTOR2_STEP_STATUS()){
+				Ramp_M2_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1] = Ramp_M2_End_Rem_Ticks_OF[Ramp_Step_Curr-1];
+				FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = cnt_now + Ramp_M2_End_Rem_Ticks[Ramp_Step_Curr-1];
+				Ramp_M2_Rem_Pending[Ramp_Step_Curr] = true;
+			}
+			if(!MOTOR3_STEP_STATUS()){
+				Ramp_M3_End_Rem_Ticks_OF_Curr[Ramp_Step_Curr-1] = Ramp_M3_End_Rem_Ticks_OF[Ramp_Step_Curr-1];
+				FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = cnt_now + Ramp_M3_End_Rem_Ticks[Ramp_Step_Curr-1];
+				Ramp_M3_Rem_Pending[Ramp_Step_Curr] = true;
+			}
 		}
 	}else{
+		Ramp_Step_Curr +=1;
 		FTM0->CONTROLS[6].CnSC &= ~FTM_CnSC_CHIE(1);	// Disable Interrupt when Ramp is done
+	    uint16_t cnt_now = (uint16_t)FTM0->CNT;
+	    FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = cnt_now+Ramp_M1_End_Rem_Ticks[RAMP_NSTEPS];
+	    FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = cnt_now+Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS];
+	    FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = cnt_now+Ramp_M3_End_Rem_Ticks[RAMP_NSTEPS];
 	}
 	#if DEBUG_MODE_SEQ
 		RES2_GPIO_LOW(); // Monitoring ISR-Time

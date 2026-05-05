@@ -5,13 +5,16 @@
 #include <stdbool.h>
 
 #define DEBUG_MODE			1
-#define TEST_SEQUENCE		(1 && DEBUG_MODE) // Nur aktiv im DEBUG_MODE
+#define TEST_SEQUENCE		(0 && DEBUG_MODE) // Nur aktiv im DEBUG_MODE
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
 #define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
 #define SIM_SENSORS			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #define ISR_MONITOR			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #define DEBUG_MODE_SEQ		1	// Debug Channel 6 Sequence Incrementer
+#define DEBUG_MODE_ISR1		1	// Debug Channel 1 Sequence Motor1
+#define DEBUG_MODE_ISR2		1	// Debug Channel 2 Sequence Motor2
+#define DEBUG_MODE_ISR3		1	// Debug Channel 4 Sequence Motor3
 
 
 //////////////////////////////////////////////////////Te
@@ -91,9 +94,9 @@
 	#define RAMP_DIV2			10	// PRESCALER MODE: Divider for Stepnumber for 2. Ramp part
 	#define RAMP_DIV3			2	// PRESCALER MODE: Divider for Stepnumber for 3. Ramp part
 
-    #define RAMP_NSTEPS				20		// NSTEP MODE: Number of Steps in Ramp (min. 2)
-    #define RAMP_NSTEPS_STEPS		20000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)
-    #define RAMP_NSTEPS_STEP_PERC	20		// NSTEP MODE: Inrease Time per Step [%]
+    #define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
+    #define RAMP_NSTEPS_STEPS		10000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
+    #define RAMP_NSTEPS_STEP_PERC	150		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
     #define RAMP_NSTEPS_STEP_VAR	0		// Unused
 	#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
 #endif

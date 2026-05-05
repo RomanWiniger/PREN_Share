@@ -91,17 +91,29 @@ int main(void)
 	  moveWay(-2845, -2476, -2476);
 	  moveWay(2810, -2366, -2366);
 	  moveWay(-4878, -4878, -4878);
+
 	  cycles++;
   }
 #endif
 
 #if DEBUG_MODE
+
   // Initialize Reserve Pins (ISR Monitoring)
   RES1_MUX_GPIO();
   RES1_SET_OUTPUT();
   RES2_MUX_GPIO();
   RES2_SET_OUTPUT();
 
+  while(true){
+	  moveWay(2467, 2668, 2320);
+	  moveWay(-2467, -2668, -2320);
+	  moveWay(-3172, 4036, 243);
+	  moveWay(2845, 2476, 2476);
+	  moveWay(-2845, -2476, -2476);
+	  moveWay(2810, -2366, -2366);
+	  moveWay(-4878, -4878, -4878);
+
+  }
 
   //BitMonitor PORTA
   PORTA->PCR;
