@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include "motor.h"
 
+
 typedef enum
 {
   uart0 = 1,
@@ -241,7 +242,7 @@ static tError startHandler(const char *args)
 
 static tError initHandler(const char *args)
 {
-	moveToInitPos(1000);
+	moveToInitPos(500);
     termWriteLine("OK");
     return EC_SUCCESS;
 }
@@ -249,14 +250,14 @@ static tError initHandler(const char *args)
 static tError cameraHandler(const char *args)
 {
     //Roboter in Kameraposition fahren
-	moveWay(1000, 1000, 1000);//to be defined
+	moveWay(8000, 0, 9000);
     termWriteLine("OK");
     return EC_SUCCESS;
 }
 
 static tError puzzleBeginHandler(const char *args)
 {
-	moveToInitPos(1000);
+	moveToInitPos(500);
     return EC_SUCCESS;
 }
 

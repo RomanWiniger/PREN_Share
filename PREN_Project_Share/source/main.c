@@ -78,10 +78,9 @@ int main(void)
 #endif
 
 #if TEST_SEQUENCE
-  uint64_t cycles = 0;
 
-  while(true){
 
+<<<<<<< HEAD
 	  moveWay(4878, 4878, 4878);
 	  moveWay(361, -1670, 2123);
 	  moveWay(2467, 2668, 2320);
@@ -94,6 +93,11 @@ int main(void)
 
 	  cycles++;
   }
+=======
+	  moveToInitPos(500);
+
+
+>>>>>>> master
 #endif
 
 #if DEBUG_MODE

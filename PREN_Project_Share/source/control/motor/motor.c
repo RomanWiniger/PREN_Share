@@ -359,10 +359,10 @@ int moveRotation(int32_t RotSteps){
     //////////////////////////////////////////////////////////////////
 
     if (RotSteps>=0){
-        Steps_Abs = (uint32_t)RotSteps;
+        Steps_Abs = (int32_t)RotSteps;
         Dir = FWD;
     }else{
-        Steps_Abs = (uint32_t)(-RotSteps);
+        Steps_Abs = (int32_t)(-RotSteps);
         Dir = REV;
     }
 
