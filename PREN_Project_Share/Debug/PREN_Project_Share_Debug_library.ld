@@ -6,7 +6,7 @@
  * Generated linker script file for MK22FN512xxx12
  * Created from library.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.30
- * MCUXpresso IDE v25.6 [Build 136] [2025-06-27] on 27.04.2026, 18:42:30
+ * MCUXpresso IDE v25.6 [Build 136] [2025-06-27] on 01.05.2026, 17:02:57
  */
 
 GROUP (

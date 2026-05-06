@@ -11,7 +11,8 @@ source/com/term.o source/com/term.d: ../source/com/term.c \
  ../source/com/uart.h \
  C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\utils/util.h \
  C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\control/control.h \
- C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\com/term.h
+ C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\com/term.h \
+ C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\control\motor/motor.h
 C:\Users\micro\git\PREN_Share\PREN_Project_Share\source/platform.h:
 C:\Users\micro\git\PREN_Share\PREN_Project_Share\device/MK22F51212.h:
 C:\Users\micro\git\PREN_Share\PREN_Project_Share\CMSIS/core_cm4.h:
@@ -25,3 +26,4 @@ C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\control/reserve_pin_conf
 C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\utils/util.h:
 C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\control/control.h:
 C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\com/term.h:
+C:\Users\micro\git\PREN_Share\PREN_Project_Share\source\control\motor/motor.h:
