@@ -93,7 +93,7 @@ int main(void)
   RES2_MUX_GPIO();
   RES2_SET_OUTPUT();
 
-  moveToInitPos(1000);
+  moveToInitPos(200);
 
 
 

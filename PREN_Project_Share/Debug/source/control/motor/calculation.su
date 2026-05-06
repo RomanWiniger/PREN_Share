@@ -1,4 +1,4 @@
-../source/control/motor/calculation.c:41:9:calcPulsePause	1376	static
+../source/control/motor/calculation.c:41:9:calcPulsePause	1344	static
 ../source/control/motor/calculation.c:598:6:analyzeSegment	72	static
 ../source/control/motor/calculation.c:618:6:calcEndPoint	64	static
 ../source/control/motor/calculation.c:660:6:segmentEndState	64	static
