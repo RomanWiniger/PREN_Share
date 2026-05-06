@@ -26,7 +26,7 @@
 #include "control.h"
 #include "globals.h"
 #include "coil.h"
-
+#include "motor.h"
 #if SENSOR_TEST
 	#include "sensor_config.h"
 #endif
@@ -80,24 +80,9 @@ int main(void)
 #if TEST_SEQUENCE
 
 
-<<<<<<< HEAD
-	  moveWay(4878, 4878, 4878);
-	  moveWay(361, -1670, 2123);
-	  moveWay(2467, 2668, 2320);
-	  moveWay(-2467, -2668, -2320);
-	  moveWay(-3172, 4036, 243);
-	  moveWay(2845, 2476, 2476);
-	  moveWay(-2845, -2476, -2476);
-	  moveWay(2810, -2366, -2366);
-	  moveWay(-4878, -4878, -4878);
 
-	  cycles++;
-  }
-=======
 	  moveToInitPos(500);
 
-
->>>>>>> master
 #endif
 
 #if DEBUG_MODE
@@ -108,16 +93,10 @@ int main(void)
   RES2_MUX_GPIO();
   RES2_SET_OUTPUT();
 
-  while(true){
-	  moveWay(2467, 2668, 2320);
-	  moveWay(-2467, -2668, -2320);
-	  moveWay(-3172, 4036, 243);
-	  moveWay(2845, 2476, 2476);
-	  moveWay(-2845, -2476, -2476);
-	  moveWay(2810, -2366, -2366);
-	  moveWay(-4878, -4878, -4878);
+  moveToInitPos(1000);
 
-  }
+
+
 
   //BitMonitor PORTA
   PORTA->PCR;
@@ -140,6 +119,7 @@ int main(void)
   GPIOD->PDOR;
 
 #else
+  moveToInitPos(1000);
   while(TRUE)
     {
       termDoWork();//lauscht an der UART Verbindung

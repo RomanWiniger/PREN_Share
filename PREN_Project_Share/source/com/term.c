@@ -250,7 +250,7 @@ static tError initHandler(const char *args)
 static tError cameraHandler(const char *args)
 {
     //Roboter in Kameraposition fahren
-	moveWay(8000, 0, 9000);
+	moveWay(7500, 0, 7500);
     termWriteLine("OK");
     return EC_SUCCESS;
 }

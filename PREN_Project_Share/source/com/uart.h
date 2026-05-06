@@ -21,8 +21,8 @@
 #define UART2_EN                  1     // [0|1] 1=>enable, 0=>disable
 #define UART2_PRINTF_EN           0     // [0|1] redirect printf to uart 2
 #define UART2_SCANF_EN            0     // [0|1] redirect scanf to uart 2
-#define UART2_RX_BUF_SIZE       512     // size of the receive buffer in bytes
-#define UART2_TX_BUF_SIZE       512     // size of the transmit buffer in bytes
+#define UART2_RX_BUF_SIZE       2048     // size of the receive buffer in bytes
+#define UART2_TX_BUF_SIZE       2048     // size of the transmit buffer in bytes
 
 
 void uart2WriteChar(char ch);

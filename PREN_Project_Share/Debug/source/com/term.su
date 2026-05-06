@@ -1,21 +1,3 @@
-<<<<<<< HEAD
-../source/com/term.c:41:6:termRegisterCommandLineHandler	24	static
-../source/com/term.c:58:6:termWriteChar	16	static
-../source/com/term.c:73:6:termWrite	16	static
-../source/com/term.c:79:6:termWriteNum32s	32	static
-../source/com/term.c:86:6:termWriteNum16s	24	static
-../source/com/term.c:100:6:termWriteLine	16	static
-../source/com/term.c:116:6:termWriteSubString	16	static
-../source/com/term.c:128:6:termParseCommand	48	static
-../source/com/term.c:187:6:termDoWork	520	static
-../source/com/term.c:209:6:termInit	16	static
-../source/com/term.c:220:15:startHandler	48	static
-../source/com/term.c:242:15:initHandler	16	static
-../source/com/term.c:249:15:cameraHandler	16	static
-../source/com/term.c:257:15:puzzleBeginHandler	16	static
-../source/com/term.c:263:15:puzzleEndHandler	16	static
-../source/com/term.c:270:6:commandInit	8	static
-=======
 ../source/com/term.c:42:6:termRegisterCommandLineHandler	24	static
 ../source/com/term.c:59:6:termWriteChar	16	static
 ../source/com/term.c:74:6:termWrite	16	static
@@ -31,5 +13,4 @@
 ../source/com/term.c:250:15:cameraHandler	16	static
 ../source/com/term.c:258:15:puzzleBeginHandler	16	static
 ../source/com/term.c:264:15:puzzleEndHandler	16	static
-../source/com/term.c:273:6:commandInit	8	static
->>>>>>> master
+../source/com/term.c:271:6:commandInit	8	static
