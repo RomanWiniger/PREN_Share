@@ -11,6 +11,6 @@
 ../source/com/term.c:221:15:startHandler	48	static
 ../source/com/term.c:243:15:initHandler	16	static
 ../source/com/term.c:250:15:cameraHandler	16	static
-../source/com/term.c:258:15:puzzleBeginHandler	16	static
-../source/com/term.c:264:15:puzzleEndHandler	16	static
-../source/com/term.c:271:6:commandInit	8	static
+../source/com/term.c:259:15:puzzleBeginHandler	16	static
+../source/com/term.c:265:15:puzzleEndHandler	16	static
+../source/com/term.c:272:6:commandInit	8	static

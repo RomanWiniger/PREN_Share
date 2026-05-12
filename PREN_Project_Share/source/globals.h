@@ -9,13 +9,14 @@
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
 #define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
-#define SIM_SENSORS			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
+#define SIM_SENSORS			0 	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #define ISR_MONITOR			1	// Disable MoveToInitPosin motorinit, when no sensor is attached
-#define DEBUG_MODE_SEQ		0	// Debug Channel 6 Sequence Incrementer
-#define DEBUG_MODE_ISR1		0	// Debug Channel 1 Sequence Motor1
-#define DEBUG_MODE_ISR2		0	// Debug Channel 2 Sequence Motor2
-#define DEBUG_MODE_ISR3		0	// Debug Channel 4 Sequence Motor3
-
+#if DEBUG_MODE
+#define DEBUG_MODE_SEQ		1	// Debug Channel 6 Sequence Incrementer
+#define DEBUG_MODE_ISR1		1	// Debug Channel 1 Sequence Motor1
+#define DEBUG_MODE_ISR2		1	// Debug Channel 2 Sequence Motor2
+#define DEBUG_MODE_ISR3		1	// Debug Channel 4 Sequence Motor3
+#endif
 
 //////////////////////////////////////////////////////Te
 // TIMER CONFIG
@@ -88,17 +89,29 @@
 	#define RAMP_MODE_PS		0						// Prescaler modulation in 4 Steps
 	#define RAMP_MODE_NSTEP		1 && !RAMP_MODE_PS		// N Spedmodes: Startup and Run
 	#define RAMP_MODE_PREMIUM	0 && !RAMP_MODE_TWOSTEP	// Calculation in ISR, Linear
+	#define RAMP_MODE_END		1
+
+
 	#define RAMP_NUMB_STEPS		50		//Fastest Motor: Ramp from start to this step number
 
-	#define RAMP_DIV1			20	// PRESCALER MODE: Divider for Stepnumber for 1. Ramp part
-	#define RAMP_DIV2			10	// PRESCALER MODE: Divider for Stepnumber for 2. Ramp part
-	#define RAMP_DIV3			2	// PRESCALER MODE: Divider for Stepnumber for 3. Ramp part
+	#define RAMP_DIV1			20	// PRESCALER MODE: UNUSED Divider for Stepnumber for 1. Ramp part
+	#define RAMP_DIV2			10	// PRESCALER MODE: UNUSED Divider for Stepnumber for 2. Ramp part
+	#define RAMP_DIV3			2	// PRESCALER MODE: UNUSED Divider for Stepnumber for 3. Ramp part
 
-    #define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
-    #define RAMP_NSTEPS_STEPS		10000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
-    #define RAMP_NSTEPS_STEP_PERC	150		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
-    #define RAMP_NSTEPS_STEP_VAR	0		// Unused
-	#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
+	#if RAMP_MODE_END
+		#define RAMP_END_PS1		200  // Stage 1 Reduce Prescaler at Remaining Steps
+		#define RAMP_END_PS2		 100  // Stage 2 Reduce Prescaler at Remaining Steps
+		#define RAMP_END_PS3		 50  // Stage 3 Reduce Prescaler at Remaining Steps
+		#define RAMP_END_PS4		  10  // Stage 4 Reduce Prescaler at Remaining Steps
+	#endif
+
+
+	#if RAMP_MODE_NSTEP
+    	#define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
+    	#define RAMP_NSTEPS_STEPS		20000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
+		#define RAMP_NSTEPS_STEP_PERC	20		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
+		#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
+	#endif
 #endif
 
 #if RAMP_MODE_PREMIUM

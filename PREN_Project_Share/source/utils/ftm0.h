@@ -16,6 +16,7 @@
 
 void ftm0Init(bool mod_max, uint32_t modulo);
 void ftm0StartClk(int CLK_Source, int Prescaler);
+void ftm0ReducePS(int CLK_Source, int Prescaler);
 void ftm0ChangePS(int CLK_Source, int Prescaler);
 void ftm0StopClk(void);
 void ftm0EnableIRQ();

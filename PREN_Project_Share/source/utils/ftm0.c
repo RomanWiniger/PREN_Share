@@ -90,6 +90,35 @@ void ftm0StartClk(int CLK_Source, int Prescaler)
   FTM0->SC = FTM_SC_CLKS(CLK_Source) |  FTM_SC_PS(Prescaler);
 }
 
+void ftm0ReducePS(int CLK_Source, int Prescaler)
+{ 	uint16_t val =FTM0->CNT;
+
+	// Stop Counter
+	FTM0->SC &= ~(FTM_SC_CLKS_MASK |FTM_SC_PS_MASK);
+
+	// set Difference CNT an CNV fro Zero and restart Counter
+	if(FTM0->CONTROLS[1].CnV>val){
+		FTM0->CONTROLS[1].CnV = (FTM0->CONTROLS[1].CnV-val);
+	}else{
+		FTM0->CONTROLS[1].CnV = (uint32_t)FTM0->CONTROLS[1].CnV + UINT16_MAX -val;
+	}
+
+	if(FTM0->CONTROLS[2].CnV>val){
+		FTM0->CONTROLS[2].CnV = (FTM0->CONTROLS[2].CnV-val);
+	}else{
+		FTM0->CONTROLS[2].CnV = (uint32_t)FTM0->CONTROLS[2].CnV + UINT16_MAX -val;
+	}
+
+	if(FTM0->CONTROLS[4].CnV>val){
+		FTM0->CONTROLS[4].CnV = (FTM0->CONTROLS[4].CnV-val);
+	}else{
+		FTM0->CONTROLS[4].CnV = (uint32_t)FTM0->CONTROLS[4].CnV + UINT16_MAX -val;
+	}
+
+	FTM0->CNT = 0;		// Writing a Non-Zero Value resets the CNT to 0x0000
+	FTM0->SC = FTM_SC_CLKS(CLK_Source) |  FTM_SC_PS(Prescaler);
+}
+
 void ftm0ChangePS(int CLK_Source, int Prescaler)
 { 	ftm0StopClk();
 	uint16_t val =FTM0->CNT;

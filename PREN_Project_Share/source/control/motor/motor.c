@@ -152,7 +152,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	bool mot2_Dir = FWD;
 	bool mot3_Dir = FWD;
 	int32_t mostMotor = 0;
-	int32_t tmp_steps = 0;
+	int32_t rem_steps = 0;
 	int16_t ramp_mode = 0;
 
 	//////////////////////////////////////////////////////////////////
@@ -272,7 +272,31 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	// All Counters must reach Max Steps, and Innterrupts must be disabled
 	// Interrupt disabeling is done in the ISR in the corresponding Channel
 
+	bool reduce[4] = {true,true,true,true}; // First Pass index
+
 	while (true){
+	#if RAMP_MODE_END
+		if (ramp_mode < 4){
+			if(mostMotor ==1){rem_steps = mot1_Abs-Motor1_Step_Curr;}
+			if(mostMotor ==2){rem_steps = mot2_Abs-Motor2_Step_Curr;}
+			if(mostMotor ==3){rem_steps = mot3_Abs-Motor3_Step_Curr;}
+
+			if((RAMP_END_PS2 < rem_steps)&&(rem_steps <= RAMP_END_PS1)&&reduce[0]){
+				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+1));
+				reduce[0] = false;
+			}else if((RAMP_END_PS3 < rem_steps)&&(rem_steps <= RAMP_END_PS2)&&reduce[1]){
+				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+2));
+				reduce[1] = false;
+			}else if((RAMP_END_PS4 < rem_steps)&&(rem_steps <= RAMP_END_PS3)&&reduce[2]){
+				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+3));
+				reduce[2] = false;
+			}else if((rem_steps <= RAMP_END_PS4)&&reduce[3]){
+				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+4));
+				reduce[3] = false;
+			}
+		}
+	#endif
+
 		if((Motor1_Step_Curr>=mot1_Abs)&&(Motor2_Step_Curr>=mot2_Abs)&&(Motor3_Step_Curr>=mot3_Abs)){
 			if(		((FTM0->CONTROLS[1].CnSC & FTM_CnSC_CHIE(1))==0)&&
 					((FTM0->CONTROLS[2].CnSC & FTM_CnSC_CHIE(1))==0)&&

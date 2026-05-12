@@ -14,9 +14,9 @@
 //		Hochschule Luzern T&A  ==== www.hslu.ch ====
 //
 //     \brief   Delta-Roboter Controller
+//     ------------------------------------------------
 //     \author  Pascal Hofstetter, Roman Winiger
 //     \date    18.04.2026
-//     ------------------------------------------------
 
 
 #include <stdio.h>
@@ -93,9 +93,13 @@ int main(void)
   RES2_MUX_GPIO();
   RES2_SET_OUTPUT();
 
-  moveToInitPos(200);
+  //moveToInitPos(200);
 
-
+  while (true){
+  moveWay(400,3000,1520);
+  moveWay(4050,3300,1520);
+  moveWay(5200,1000,120);
+  }
 
 
   //BitMonitor PORTA
