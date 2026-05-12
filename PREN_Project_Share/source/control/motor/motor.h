@@ -9,8 +9,7 @@
 #define MOTOR_STEPPER_H_
 
 void motorInit(void);
-int moveWay(int32_t Mot1, int32_t Mot2,int32_t Mot3);
-int moveRotation(int32_t RotSteps);
+int moveWay(int32_t Mot1, int32_t Mot2,int32_t Mot3, int32_t RotSteps);
 void moveToInitPos(uint32_t);
 
 #endif /* MOTOR_STEPPER_H_ */

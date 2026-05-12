@@ -120,6 +120,8 @@ int main(void)
 
 #else
   moveToInitPos(1000);
+  moveWay(3019, 2441, 2418, 0 );
+  moveWay(682, -1668, 1300, 0);
   while(TRUE)
     {
       termDoWork();//lauscht an der UART Verbindung
