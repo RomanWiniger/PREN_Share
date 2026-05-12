@@ -250,8 +250,25 @@ static tError initHandler(const char *args)
 static tError cameraHandler(const char *args)
 {
     //Roboter in Kameraposition fahren
-	moveWay(7500, 0, 7500,0);
-    termWriteLine("OK");
+	struct ReceivedCommand commands;
+		char* current;
+
+	#if COMMAND_BYTE
+		commands.CMD[0] = (bool)strtol(args, &current, 10);//strtol extracts the values
+		commands.Steps1 = strtol(current, &current, 10);//strtol extracts the values
+	#else
+		commands.Steps1 = strtol(args, &current, 10);//strtol extracts the values
+	#endif
+		commands.Steps2 = strtol(current, &current, 10);
+		commands.Steps3 = strtol(current, &current, 10);
+		commands.StepsRot = strtol(current, &current, 10);
+		commands.ActCoil = (bool)strtol(current, &current, 10);
+		commands.ErrorHandling = (bool)strtol(current, &current, 10);
+
+		newCommand(commands);
+
+    termWriteLine("FINISH");
+
     return EC_SUCCESS;
 }
 
