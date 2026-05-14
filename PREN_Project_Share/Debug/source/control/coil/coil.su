@@ -1,0 +1,2 @@
+../source/control/coil/coil.c:12:5:coilInit	4	static
+../source/control/coil/coil.c:19:5:coil_ctrl	16	static

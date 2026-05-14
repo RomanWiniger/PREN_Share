@@ -143,14 +143,20 @@ void moveToInitPos(uint32_t toggle_US){
 	}
 }
 
-int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
+int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
+
+
 
 	uint32_t mot1_Abs = 0;
 	uint32_t mot2_Abs = 0;
 	uint32_t mot3_Abs = 0;
+	uint32_t rot_Abs = 0;
+
 	bool mot1_Dir = FWD;
 	bool mot2_Dir = FWD;
 	bool mot3_Dir = FWD;
+	bool rot_Dir = FWD;
+
 	int32_t mostMotor = 0;
 	int32_t rem_steps = 0;
 	int16_t ramp_mode = 0;
@@ -194,6 +200,14 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 		mot3_Dir = REV;
 	}
 
+    if (RotSteps>=0){
+        rot_Abs = (int32_t)RotSteps;
+        rot_Dir = FWD;
+    }else{
+        rot_Abs = (int32_t)(-RotSteps);
+        rot_Dir = REV;
+    }
+
 	Motor1_Step_Max = mot1_Abs;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
 	Motor2_Step_Max = mot2_Abs;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
 	Motor3_Step_Max = mot3_Abs;		// Set Stepper-Numer to Global, For Accessibility ISR of FTM
@@ -208,6 +222,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 		MOTOR1_EN_ENABLE();
 		MOTOR2_EN_ENABLE();
 		MOTOR3_EN_ENABLE();
+		MOTORROT_EN_ENABLE();
 
 	// Minimal Time between setting of ENABLE and Setting DIR
 	waitMs(ENABLE_MIN_DELAY_TIME_MS);
@@ -221,9 +236,11 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 		if(mot1_Dir){MOTOR1_DIR_FWD();}else{MOTOR1_DIR_REV();}
 		if(mot2_Dir){MOTOR2_DIR_FWD();}else{MOTOR2_DIR_REV();}
 		if(mot3_Dir){MOTOR3_DIR_FWD();}else{MOTOR3_DIR_REV();}
+		if(rot_Dir){MOTORROT_DIR_FWD();}else{MOTORROT_DIR_REV();}
 		for(volatile int i = 0; i < 1000; i++){
 		    MOTOR1_EN_ENABLE();
 		}
+
 	// Minimal Time between setting of DIR and Setting STEP
 	waitMs(DIR_MIN_DELAY_TIME_MS);
 	#endif
@@ -250,6 +267,24 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	FTM0->CONTROLS[6].CnSC |= FTM_CnSC_CHIE(1); //Ramp Sequence incrementer
 #endif
 
+	if(rot_Abs != 0){
+
+	        MotorRot_Step_Max = rot_Abs;  // FIX 1: war nie gesetzt, ISR vergleicht aber dagegen
+
+	        MotorRot_Pause = MOTOR_MINPAUSE_MOD_TICK;
+
+	        // FIX 2: Timer stoppen und Counter resetten – genau wie in moveWay()
+	        ftm0StopClk();
+	        FTM0->CNT = 0;
+
+
+	        FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;
+
+	        // FIX 4: Interrupt-Flag clearen BEVOR der Interrupt aktiviert wird
+	        FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHF(1);
+	        FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);
+	    }
+
 
 	//////////////////////////////////////////////////////////////////
 	///  START TIMERS
@@ -275,6 +310,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	bool reduce[4] = {true,true,true,true}; // First Pass index
 
 	while (true){
+
 	#if RAMP_MODE_END
 		if (ramp_mode < 4){
 			if(mostMotor ==1){rem_steps = mot1_Abs-Motor1_Step_Curr;}
@@ -297,10 +333,11 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 		}
 	#endif
 
-		if((Motor1_Step_Curr>=mot1_Abs)&&(Motor2_Step_Curr>=mot2_Abs)&&(Motor3_Step_Curr>=mot3_Abs)){
-			if(		((FTM0->CONTROLS[1].CnSC & FTM_CnSC_CHIE(1))==0)&&
-					((FTM0->CONTROLS[2].CnSC & FTM_CnSC_CHIE(1))==0)&&
-					((FTM0->CONTROLS[4].CnSC & FTM_CnSC_CHIE(1))==0)){
+		if((Motor1_Step_Curr>=mot1_Abs)&&(Motor2_Step_Curr>=mot2_Abs)&&(Motor3_Step_Curr>=mot3_Abs)&&(MotorRot_Step_Curr >= rot_Abs)){
+			if(		((FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC & FTM_CnSC_CHIE(1))==0)&&
+					((FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC & FTM_CnSC_CHIE(1))==0)&&
+					((FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC & FTM_CnSC_CHIE(1))==0)&&
+		            ((FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC & FTM_CnSC_CHIE(1))==0)){
 				break;}
 		}
 #if RAMP_MODE_PS
@@ -357,6 +394,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 #endif
 	}
 	initGlobalsMove();
+	initGlobalsRot();
 
 	//////////////////////////////////////////////////////////////////
 	///  END ACTION
@@ -366,90 +404,11 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3){
 	waitMs(100*MOTOR_PULSE_US/1000);	// Wait 100 Pulse-width for last Pulse to finish
 
 	resetMoveTimers();					// RESET Global Variables
+	resetRotTimers();
 	ftm0StopClk();						// Stop CLK and Prescaler (All Channels)
 	return 1;							// SUCCESS
 
 			}
-
-
-
-int moveRotation(int32_t RotSteps){
-
-    uint32_t Steps_Abs = 0;
-    bool Dir = FWD;
-
-    //////////////////////////////////////////////////////////////////
-    ///  GET DIRECTION
-    //////////////////////////////////////////////////////////////////
-
-    if (RotSteps>=0){
-        Steps_Abs = (int32_t)RotSteps;
-        Dir = FWD;
-    }else{
-        Steps_Abs = (int32_t)(-RotSteps);
-        Dir = REV;
-    }
-
-    //////////////////////////////////////////////////////////////////
-    ///  SET ENABLE
-    //////////////////////////////////////////////////////////////////
-
-    MOTORROT_EN_ENABLE();
-    waitMs(ENABLE_MIN_DELAY_TIME_MS);
-
-
-    //////////////////////////////////////////////////////////////////
-    ///  SET DIRECTION
-    //////////////////////////////////////////////////////////////////
-
-    #if ENABLE_DIR
-        if(Dir){MOTORROT_DIR_FWD();}else{MOTORROT_DIR_REV();}
-        waitMs(DIR_MIN_DELAY_TIME_MS);
-    #endif
-
-    //////////////////////////////////////////////////////////////////
-    ///  SET TIMER VALUES
-    //////////////////////////////////////////////////////////////////
-
-    if(Steps_Abs != 0){
-
-        MotorRot_Step_Max = Steps_Abs;  // FIX 1: war nie gesetzt, ISR vergleicht aber dagegen
-
-        MotorRot_Pause = MOTOR_MINPAUSE_MOD_TICK;
-
-        // FIX 2: Timer stoppen und Counter resetten – genau wie in moveWay()
-        ftm0StopClk();
-        FTM0->CNT = 0;
-
-
-        FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;
-
-        // FIX 4: Interrupt-Flag clearen BEVOR der Interrupt aktiviert wird
-        FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHF(1);
-        FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);
-    }
-
-    //////////////////////////////////////////////////////////////////
-    ///  START TIMERS
-    //////////////////////////////////////////////////////////////////
-
-    ftm0StartClk(CLK_SRC_GLOBAL, PS_GLOBAL);
-    ftm0EnableIRQ();
-
-    //////////////////////////////////////////////////////////////////
-    ///  WAIT FOR COMPLETION
-    //////////////////////////////////////////////////////////////////
-
-    while(true){
-        if(MotorRot_Step_Curr >= Steps_Abs){break;}
-    }
-
-    initGlobalsRot();
-    waitMs((MOTOR_PULSE_US/1000)*1000);
-    resetRotTimers();
-    ftm0StopClk();
-    return 1;
-}
 
 void resetMoveTimers(void){
 
