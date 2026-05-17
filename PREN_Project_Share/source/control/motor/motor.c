@@ -251,6 +251,14 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 
 	mostMotor = calcPulsePause(mot1_Abs,mot2_Abs,mot3_Abs);		//Set timer Values (Global)
 	ftm0StopClk();
+
+#if RAMP_MODE_NSTEP
+	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = Ramp_M1_End_Rem_Ticks[0]; // Set Lemngth of first Ramp
+	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = Ramp_M2_End_Rem_Ticks[0]; // Set Lemngth of first Ramp
+	FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = Ramp_M3_End_Rem_Ticks[0]; // Set Lemngth of first Ramp
+	FTM0->CONTROLS[6].CnV = Ramp_Step_Ticks[1]; // Set Lemngth of first Ramp
+#endif
+
 	FTM0->CNT=0;	// Reset the FTM0-Counter in order to not go go over an unintentional Overflos
 
 	// activate Timer Interrupts (Channels) unless Step number isn't Zero
@@ -265,6 +273,11 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	if(mot3_Abs!=0){FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 #if RAMP_MODE_NSTEP
 	FTM0->CONTROLS[6].CnSC |= FTM_CnSC_CHIE(1); //Ramp Sequence incrementer
+#endif
+
+#if DEBUG_MODE_ISR1
+	RES1_GPIO_HIGH(); // Monitoring ISR-Time
+	RES1_GPIO_LOW(); // Monitoring ISR-Time
 #endif
 
 	if(rot_Abs != 0){
@@ -293,9 +306,10 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 #if RAMP_ACTIVE && RAMP_MODE_PS
 	ftm0StartClk(CLK_SRC_GLOBAL,(PS_GLOBAL+4));
 #else
+	ftm0EnableIRQ();
 	ftm0StartClk((CLK_SRC_GLOBAL),PS_GLOBAL);
 #endif
-	ftm0EnableIRQ();
+
 	RES2_GPIO_LOW(); // Monitoring ISR-Time
 
 

@@ -67,6 +67,11 @@ double Ramp_Factor_current =1;
 	int16_t M3_PR_Ramp_OF_Curr=0; // Overflow Count Current
 #endif
 
+
+	uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+
 #if RAMP_MODE_NSTEP
 	int64_t Motor1_Pause_Full=0;
 	int64_t Motor2_Pause_Full=0;
@@ -81,7 +86,6 @@ double Ramp_Factor_current =1;
 	bool Ramp_M1_Rem_Pending[RAMP_NSTEPS+1]={false};
 	uint16_t Ramp_M1_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M1_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
-	uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M1_Pause_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M1_Pause_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M1_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
@@ -93,7 +97,6 @@ double Ramp_Factor_current =1;
 	bool Ramp_M2_Rem_Pending[RAMP_NSTEPS+1]={false};
 	uint16_t Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M2_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
-	uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M2_Pause_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M2_Pause_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M2_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
@@ -105,7 +108,6 @@ double Ramp_Factor_current =1;
 	bool Ramp_M3_Rem_Pending[RAMP_NSTEPS+1]={false};
 	uint16_t Ramp_M3_End_Rem_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M3_End_Rem_Ticks_OF[RAMP_NSTEPS+1]={0};
-	uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M3_Pause_Ticks[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M3_Pause_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M3_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
@@ -113,6 +115,11 @@ double Ramp_Factor_current =1;
 	uint16_t Ramp_M3_Pulse_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M3_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 
+	// ErrorCheck
+	bool EndState_Check=false;
+	uint64_t EndTicks_Check=0;
+	uint64_t HighNumCheck=0;
+	uint64_t LowNumCheck=0;
 #endif
 
 #if DEBUG

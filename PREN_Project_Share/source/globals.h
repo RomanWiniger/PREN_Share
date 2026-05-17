@@ -10,7 +10,7 @@
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
 #define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
 #define SIM_SENSORS			0 	// Disable MoveToInitPosin motorinit, when no sensor is attached
-#define ISR_MONITOR			1	// Disable MoveToInitPosin motorinit, when no sensor is attached
+#define ISR_MONITOR			0	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #if DEBUG_MODE
 #define DEBUG_MODE_SEQ		1	// Debug Channel 6 Sequence Incrementer
 #define DEBUG_MODE_ISR1		1	// Debug Channel 1 Sequence Motor1
@@ -73,8 +73,8 @@
 // Motor
 
 //Set Overall Parameters
-#define MOTOR_PULSE_US			1500		//Start Pulse to End Pulse
-#define MIN_STEP_DISTANCE_US	1500		//End Pulse to Start Pulse
+#define MOTOR_PULSE_US			500		//Start Pulse to End Pulse
+#define MIN_STEP_DISTANCE_US	500		//End Pulse to Start Pulse
 #define RAMP_DISTANCE_FACTOR	10		//*PREMIUM RAMP* *End Pulse to Start Pulse BEGINN LINEAR RAMP (if(<= 1) -> deactivated)
 #define FIRST_PULSE_START_MOD	1	//Start first Pulse at this Modulo Value of the Channel
 
@@ -105,9 +105,8 @@
 		#define RAMP_END_PS4		  10  // Stage 4 Reduce Prescaler at Remaining Steps
 	#endif
 
-
+  	#define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
 	#if RAMP_MODE_NSTEP
-    	#define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
     	#define RAMP_NSTEPS_STEPS		20000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
 		#define RAMP_NSTEPS_STEP_PERC	20		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
 		#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
@@ -187,6 +186,12 @@ extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tic
 	extern int16_t M3_PR_Ramp_OF_Curr; // Overflow Count Current
 #endif
 
+
+	extern uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
+	extern uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
+	extern uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
+
+
 #if RAMP_MODE_NSTEP
 
 	extern int64_t Motor1_Pause_Full;
@@ -197,12 +202,10 @@ extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tic
 	extern uint16_t Ramp_Step_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_Step_Ticks_OF[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_Step_Ticks_OF_Curr[RAMP_NSTEPS+1];
-
 	extern bool Ramp_M1_Start_State[RAMP_NSTEPS+1];
 	extern bool Ramp_M1_Rem_Pending[RAMP_NSTEPS+1]; // true if pending remainig ticks at beginning of Step (last for initial
 	extern uint16_t Ramp_M1_End_Rem_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M1_End_Rem_Ticks_OF[RAMP_NSTEPS+1];
-	extern uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M1_Pause_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M1_Pause_Ticks_OF[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M1_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1];
@@ -214,7 +217,6 @@ extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tic
 	extern bool Ramp_M2_Rem_Pending[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M2_End_Rem_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M2_End_Rem_Ticks_OF[RAMP_NSTEPS+1];
-	extern uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M2_Pause_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M2_Pause_Ticks_OF[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M2_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1];
@@ -226,13 +228,18 @@ extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tic
 	extern bool Ramp_M3_Rem_Pending[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_End_Rem_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_End_Rem_Ticks_OF[RAMP_NSTEPS+1];
-	extern uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_Pause_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_Pause_Ticks_OF[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_Pause_Ticks_OF_Curr[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_Pulse_Ticks[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_Pulse_Ticks_OF[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1];
+
+	// ErrorCheck
+	extern bool EndState_Check;
+	extern uint64_t EndTicks_Check;
+	extern uint64_t HighNumCheck;
+	extern uint64_t LowNumCheck;
 #endif
 
 #if DEBUG

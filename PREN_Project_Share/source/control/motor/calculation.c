@@ -24,12 +24,12 @@
 
 #if RAMP_MODE_NSTEP
 static void overflowCounter_16bit(uint64_t number, uint16_t* OF_counter, uint16_t* modulo);
-void calcEndPoint(int64_t total_ticks,bool start_state,uint64_t rem_start_ticks,uint64_t highTicks,uint64_t lowTicks,bool* endState,uint64_t* endTicks);
+void calcEndPoint(int64_t total_ticks,bool start_state,uint64_t rem_start_ticks,uint64_t highTicks,uint64_t lowTicks,bool* endState,uint64_t* endTicks,uint64_t* highNumber, uint64_t* lowNumber);
 double scalePercent(uint64_t value, uint64_t percentage);
-void segmentEndState(int64_t total_ticks,bool start_state,uint64_t start_state_ticks,uint64_t other_state_ticks,bool* endState,uint64_t* endTicks);
+void segmentEndState(int64_t total_ticks,bool start_state,uint64_t start_state_ticks,uint64_t other_state_ticks,bool* endState,uint64_t* endTicks,uint64_t* start_state_Number,uint64_t* other_state_Number);
 void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t endTicks[RAMP_NSTEPS+1],
 					uint64_t pulseTicks[RAMP_NSTEPS+1], uint64_t pauseTicks[RAMP_NSTEPS+1],
-					double factors[RAMP_NSTEPS+1],uint64_t pulseOrigin,uint64_t pauseOrigin);
+					uint64_t segTicksScal[RAMP_NSTEPS+1], double factors[RAMP_NSTEPS+1],uint64_t pulseOrigin,uint64_t pauseOrigin);
 void resolveOverflows(	uint64_t rem64[RAMP_NSTEPS+1],uint64_t pulse64[RAMP_NSTEPS+1], uint64_t pause64[RAMP_NSTEPS+1],
 					uint16_t rem16[RAMP_NSTEPS+1],uint16_t pulse16[RAMP_NSTEPS+1], uint16_t pause16[RAMP_NSTEPS+1],
 					uint16_t remOF[RAMP_NSTEPS+1],uint16_t pulseOF[RAMP_NSTEPS+1], uint16_t pauseOF[RAMP_NSTEPS+1]);
@@ -294,19 +294,16 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		//					The increase is refered to the following Segment
 
 		double Ramp_Segment_factor[RAMP_NSTEPS+1];
-		uint64_t tmp_Ramp_Segment_ticks;
+		uint64_t tmp_Ramp_Segment_ticks[RAMP_NSTEPS+1] = {0};
 
-		uint64_t tmp_m1_ticks_init = 0;
 		uint64_t tmp_m1_pause_ticks[RAMP_NSTEPS+1] = {0};
 		uint64_t tmp_m1_pulse_ticks[RAMP_NSTEPS+1] = {0};
 		uint64_t tmp_m1_end_rem_ticks[RAMP_NSTEPS+1] = {0};
 
-		uint64_t tmp_m2_ticks_init = 0;
 		uint64_t tmp_m2_pulse_ticks[RAMP_NSTEPS+1] = {0};
 		uint64_t tmp_m2_pause_ticks[RAMP_NSTEPS+1] = {0};
 		uint64_t tmp_m2_end_rem_ticks[RAMP_NSTEPS+1] = {0};
 
-		uint64_t tmp_m3_ticks_init = 0;
 		uint64_t tmp_m3_pause_ticks[RAMP_NSTEPS+1] = {0};
 		uint64_t tmp_m3_pulse_ticks[RAMP_NSTEPS+1] = {0};
 		uint64_t tmp_m3_end_rem_ticks[RAMP_NSTEPS+1] = {0};
@@ -318,8 +315,8 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		}
 
 		for(int i = 0;i<=RAMP_NSTEPS;i++){
-			tmp_Ramp_Segment_ticks=Ramp_Segment_factor[i]*RAMP_NSTEPS_STEPS;
-			overflowCounter_16bit(tmp_Ramp_Segment_ticks,&Ramp_Step_Ticks_OF[i],&Ramp_Step_Ticks[i]);
+			tmp_Ramp_Segment_ticks[i]=Ramp_Segment_factor[i]*RAMP_NSTEPS_STEPS;
+			overflowCounter_16bit(tmp_Ramp_Segment_ticks[i],&Ramp_Step_Ticks_OF[i],&Ramp_Step_Ticks[i]);
 			Ramp_Step_Ticks_OF_Curr[i]=Ramp_Step_Ticks_OF[i]; // initialize Overflow Current of Ramp
 		}
 		// Step 0 is skipped: Ramp_Step_Curr is initialised to 1 below.
@@ -330,36 +327,15 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		Ramp_Step_Ticks_OF[0]=0;
 		Ramp_Step_Ticks[0]=0;
 
-
-		// Set first Step State of all Motors
-		if (mostMotor == 1){
-			Ramp_M1_Start_State[1]=false;
-			tmp_m1_ticks_init=0;
-			Ramp_M2_Start_State[1]=false;
-			tmp_m2_ticks_init=tmp_M2_Pause_init;
-			Ramp_M3_Start_State[1]=false;
-			tmp_m3_ticks_init=tmp_M3_Pause_init;
-		}else if(mostMotor == 2){
-			Ramp_M1_Start_State[1]=false;
-			tmp_m1_ticks_init=tmp_M1_Pause_init;
-			Ramp_M2_Start_State[1]=false;
-			tmp_m2_ticks_init=0;
-			Ramp_M3_Start_State[1]=false;
-			tmp_m3_ticks_init=tmp_M3_Pause_init;
-		}else if(mostMotor == 3){
-			Ramp_M1_Start_State[1]=false;
-			tmp_m1_ticks_init=tmp_M1_Pause_init;
-			Ramp_M2_Start_State[1]=false;
-			tmp_m2_ticks_init=tmp_M2_Pause_init;
-			Ramp_M3_Start_State[1]=false;
-			tmp_m3_ticks_init=0;
-		}
+		Ramp_M1_Start_State[0]=false;
+		Ramp_M2_Start_State[0]=false;
+		Ramp_M3_Start_State[0]=false;
 
 		//////////////////////////////////////////////////////////////////
 		///  MOTOR 1
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M1_Start_State, tmp_m1_ticks_init,tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor1_Pause_Full);
+		analyzeSegment(Ramp_M1_Start_State,tmp_M1_Pause_init,tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks,tmp_Ramp_Segment_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor1_Pause_Full);
 		resolveOverflows(tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks,Ramp_M1_End_Rem_Ticks ,Ramp_M1_Pulse_Ticks,Ramp_M1_Pause_Ticks,Ramp_M1_End_Rem_Ticks_OF,Ramp_M1_Pulse_Ticks_OF,Ramp_M1_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M1_Rem_Pending,Ramp_M1_End_Rem_Ticks);
 
@@ -367,7 +343,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		///  MOTOR 2
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M2_Start_State,tmp_m2_ticks_init,tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor2_Pause_Full);
+		analyzeSegment(Ramp_M2_Start_State,tmp_M2_Pause_init,tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks,tmp_Ramp_Segment_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor2_Pause_Full);
 		resolveOverflows(tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks,Ramp_M2_End_Rem_Ticks ,Ramp_M2_Pulse_Ticks,Ramp_M2_Pause_Ticks,Ramp_M2_End_Rem_Ticks_OF,Ramp_M2_Pulse_Ticks_OF,Ramp_M2_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M2_Rem_Pending,Ramp_M2_End_Rem_Ticks);
 
@@ -375,7 +351,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		///  MOTOR 3
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M3_Start_State,tmp_m3_ticks_init,tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor3_Pause_Full);
+		analyzeSegment(Ramp_M3_Start_State,tmp_M3_Pause_init,tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks, tmp_Ramp_Segment_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor3_Pause_Full);
 		resolveOverflows(tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks,Ramp_M3_End_Rem_Ticks ,Ramp_M3_Pulse_Ticks,Ramp_M3_Pause_Ticks,Ramp_M3_End_Rem_Ticks_OF,Ramp_M3_Pulse_Ticks_OF,Ramp_M3_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M3_Rem_Pending,Ramp_M3_End_Rem_Ticks);
 
@@ -595,14 +571,17 @@ static void calcLinearRamp(int32_t Mot1,int32_t Mot2, int32_t Mot3,int64_t pause
 #endif
 
 #if RAMP_MODE_NSTEP
-void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t endTicks[RAMP_NSTEPS+1],uint64_t pulseTicks[RAMP_NSTEPS+1], uint64_t pauseTicks[RAMP_NSTEPS+1],double factors[RAMP_NSTEPS+1],uint64_t pulseOrigin,uint64_t pauseOrigin){
+void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t endTicks[RAMP_NSTEPS+1],uint64_t pulseTicks[RAMP_NSTEPS+1], uint64_t pauseTicks[RAMP_NSTEPS+1],uint64_t segTicksScal[RAMP_NSTEPS+1],double factors[RAMP_NSTEPS+1],uint64_t pulseOrigin,uint64_t pauseOrigin){
+	uint64_t highNumber[RAMP_NSTEPS+1]={0};
+	uint64_t lowNumber[RAMP_NSTEPS+1]={0};
+
 	//First Segment
 	endTicks[0]=initTicks;
-	calcEndPoint(RAMP_NSTEPS_STEPS,startState[1],endTicks[0],pulseOrigin,pauseOrigin,&startState[2],&endTicks[1]);
+	calcEndPoint(RAMP_NSTEPS_STEPS,startState[1],endTicks[0],pulseOrigin,pauseOrigin,&startState[2],&endTicks[1],&highNumber[1],&lowNumber[1]);
 
 	//Any further segment
 	for(int i=2;i<=RAMP_NSTEPS;i++){
-		calcEndPoint(RAMP_NSTEPS_STEPS,startState[i],endTicks[i-1],pulseOrigin,pauseOrigin,&startState[i+1],&endTicks[i]);
+		calcEndPoint(RAMP_NSTEPS_STEPS,startState[i],endTicks[i-1],pulseOrigin,pauseOrigin,&startState[i+1],&endTicks[i],&highNumber[i],&lowNumber[i]);
 	}
 
 	// Scale-Up each Segment
@@ -610,6 +589,24 @@ void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t e
         endTicks[i]   *= factors[i];
         pulseTicks[i] = pulseOrigin * factors[i];
         pauseTicks[i] = pauseOrigin * factors[i];
+	}
+
+
+	// Ckeck Accuracy of End State & Ticks
+
+
+	for(int i=1;i<=RAMP_NSTEPS;i++){
+		// (re)init Globals
+		EndState_Check=false;
+		EndTicks_Check=0;
+		HighNumCheck=0;
+		LowNumCheck=0;
+
+		calcEndPoint(RAMP_NSTEPS_STEPS,startState[i],endTicks[i-1],pulseTicks[i],pauseTicks[i],&EndState_Check, &EndTicks_Check,&HighNumCheck,&LowNumCheck);
+		if ((EndState_Check != startState[i+1])||(HighNumCheck!=highNumber[i])||(LowNumCheck!=lowNumber[i])){
+			// TODO: What to do when no Matching
+			int iasd = 0;
+		}
 	}
 }
 #endif
@@ -621,7 +618,9 @@ void calcEndPoint(	int64_t total_ticks,
 					uint64_t highTicks,
 					uint64_t lowTicks,
 					bool* endState, 		// Output
-					uint64_t* endTicks 		// Output
+					uint64_t* endTicks, 		// Output
+					uint64_t* highNumber,
+					uint64_t* lowNumber
 					){
 
 	// Case: Remaining Ticks are longer than the total_tick (Segment)
@@ -637,9 +636,9 @@ void calcEndPoint(	int64_t total_ticks,
 
 	// Calculate the End State of the Segment
 	if(start_state){
-		segmentEndState((uint64_t)total_ticks,start_state,highTicks,lowTicks,endState,endTicks);
-	}else{
-		segmentEndState((uint64_t)total_ticks,start_state,lowTicks,highTicks,endState,endTicks);
+		segmentEndState((uint64_t)total_ticks,!start_state,lowTicks,highTicks,endState,endTicks,lowNumber,highNumber);
+	}else{ // StartState was low, remainig Ticks subtracted: Calc Semgment starts wit inverted Startstate
+		segmentEndState((uint64_t)total_ticks,!start_state,highTicks,lowTicks,endState,endTicks,highNumber,lowNumber);
 	}
 }
 #endif
@@ -662,8 +661,12 @@ void segmentEndState(	int64_t total_ticks,
 						uint64_t start_state_ticks,
 						uint64_t other_state_ticks,
 						bool* endState,
-						uint64_t* endTicks){
+						uint64_t* endTicks,
+						uint64_t* start_state_Number,
+						uint64_t* other_state_Number){
 	bool tmp_state = start_state;
+	*start_state_Number = 0;
+	*other_state_Number = 0;
 
 	while (true){
 		// Start State
@@ -673,6 +676,7 @@ void segmentEndState(	int64_t total_ticks,
 			return;
 		}else{
 			total_ticks -= start_state_ticks;
+			*start_state_Number += 1;
 			tmp_state = !tmp_state;
 		}
 
@@ -683,6 +687,7 @@ void segmentEndState(	int64_t total_ticks,
 			return;
 		}else{
 			total_ticks -= other_state_ticks;
+			*other_state_Number += 1;
 			tmp_state = !tmp_state;
 		}
 	}

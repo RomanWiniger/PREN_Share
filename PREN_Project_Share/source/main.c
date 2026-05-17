@@ -45,7 +45,7 @@
  */
 int main(void)
 {
-  termInit(115200);
+	termInit(115200);
   commandInit();
   controlInit();
 
@@ -96,9 +96,19 @@ int main(void)
   //moveToInitPos(200);
 
   while (true){
-  moveWay(400,3000,1520);
-  moveWay(4050,3300,1520);
-  moveWay(5200,1000,120);
+  moveWay(  400,  3000,  1520,  90);  // 1: asymmetric positive
+  moveWay( -400, -3000, -1520, -90);  // 2: reverse of 1
+  moveWay(  400,  1520,  3000,  90);  // 1: asymmetric positive
+  moveWay( -400, -1520, -3000, -90);  // 2: reverse of 1
+  moveWay( 3000,  2500,  1000,  45);  // 3: large positive
+  moveWay(-3000, -2500, -1000, -45);  // 4: large negative
+  moveWay(  100,    50,   200,   0);  // 5: small steps, no rotation
+  moveWay( 2000, -1500,  1200,  90);  // 6: mixed directions
+  moveWay(-2500,  3000,  -800, -90);  // 7: mixed directions
+  moveWay(    0,  2000,  2000,  45);  // 8: motor 1 idle
+  moveWay( 1500,     0,  1500,   0);  // 9: motor 2 idle
+  moveWay( 3000,  3000,  3000,  90);  // 10: all at max
+
   }
 
 
