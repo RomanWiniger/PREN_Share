@@ -161,7 +161,9 @@ void ftm0StopIRQ()
   FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHIE_MASK;
   FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHIE_MASK;
   FTM0->CONTROLS[6].CnSC &= ~FTM_CnSC_CHIE_MASK;
-  FTM0->CONTROLS[7].CnSC &= ~FTM_CnSC_CHIE_MASK;
+
+  // Never stop Channel 7: Emergency Stop needs to stay Active
+  //FTM0->CONTROLS[7].CnSC &= ~FTM_CnSC_CHIE_MASK;
 }
 
 
@@ -235,20 +237,20 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 	// If Mx_Step is false: 	Output was high before
 		if (MOTOR1_STEP_STATUS()){
 			MOTOR1_STEP_GPIO_LOW();									// Output was toggled to true in the current ISR
-			FTM0->CONTROLS[1].CnV += (Motor1_Pause);				// Set Distance to end Pause
+			FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV += (Motor1_Pause);				// Set Distance to end Pause
 
 			// Corrector for rounding errors in calculation
 			for(int i = 0;i<NUM_CORRECTOR_LOOPS;i++){
 				if (Motor1_Step_Corrector[i]){
 					if((Motor1_Step_Curr%Motor1_Step_Corrector[i]) == 0){
-						FTM0->CONTROLS[1].CnV += 1;
+						FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV += 1;
 					}
 				}
 			}
 
 			// Disable Interrupt if all Steps are done
 			if (Motor1_Step_Curr >= Motor1_Step_Max){
-				FTM0->CONTROLS[1].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
+				FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);		// Disable Interrupt when last Pulse ended
 			}
 		}else{				 // Output was low before: Start Pulse
 #if OVERFLOW_HANDLING
@@ -258,7 +260,7 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			}
 			else{
 				MOTOR1_STEP_GPIO_HIGH();
-				FTM0->CONTROLS[1].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
+				FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
 				Motor1_Step_Curr +=1;
 				Motor1_Step_OF_Curr = Motor1_Step_OF;			// Restart Overflow counter
 			}
@@ -709,6 +711,7 @@ void FTM0CH6_IRQHandler(void){
 void FTM0CH7_IRQHandler(void){
 	FTM0->CONTROLS[7].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 	termWrite("ERROR");
+
 
 	MOTOR1_STEP_GPIO_LOW();
 	MOTOR2_STEP_GPIO_LOW();

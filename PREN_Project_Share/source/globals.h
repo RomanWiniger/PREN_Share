@@ -108,7 +108,7 @@
   	#define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
 	#if RAMP_MODE_NSTEP
     	#define RAMP_NSTEPS_STEPS		20000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
-		#define RAMP_NSTEPS_STEP_PERC	20		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
+		#define RAMP_NSTEPS_STEP_PERC	100		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
 		#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
 	#endif
 #endif

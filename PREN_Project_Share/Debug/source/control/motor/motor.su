@@ -1,7 +1,7 @@
-../source/control/motor/motor.c:37:6:motorInit	8	static
-../source/control/motor/motor.c:114:6:moveToInitPos	24	static
-../source/control/motor/motor.c:146:5:moveWay	64	static
-../source/control/motor/motor.c:427:6:resetMoveTimers	8	static
-../source/control/motor/motor.c:439:6:resetRotTimers	8	static
-../source/control/motor/motor.c:447:6:initGlobalsMove	24	static
-../source/control/motor/motor.c:474:6:initGlobalsRot	4	static
+../source/control/motor/motor.c:38:6:motorInit	8	static
+../source/control/motor/motor.c:118:6:moveToInitPos	24	static
+../source/control/motor/motor.c:150:5:moveWay	64	static
+../source/control/motor/motor.c:434:6:resetMoveTimers	8	static
+../source/control/motor/motor.c:446:6:resetRotTimers	8	static
+../source/control/motor/motor.c:454:6:initGlobalsMove	24	static
+../source/control/motor/motor.c:485:6:initGlobalsRot	4	static

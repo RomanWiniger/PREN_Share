@@ -12,6 +12,7 @@ source/control/motor/motor.o source/control/motor/motor.d: \
  ../source/control/motor/calculation.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\source/globals.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\sensor/sensor_config.h \
+ ../source/control/motor/emergency.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\source\control/reserve_pin_config.h
 ../source/control/motor/motor_config.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\source/platform.h:
@@ -26,4 +27,5 @@ C:\Users\roman\myGitRepo\PREN_Project_Share\source\utils/wait.h:
 ../source/control/motor/calculation.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\source/globals.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\sensor/sensor_config.h:
+../source/control/motor/emergency.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\source\control/reserve_pin_config.h:

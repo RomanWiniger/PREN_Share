@@ -45,7 +45,7 @@
  */
 int main(void)
 {
-	termInit(115200);
+  termInit(115200);
   commandInit();
   controlInit();
 
@@ -108,8 +108,11 @@ int main(void)
   moveWay(    0,  2000,  2000,  45);  // 8: motor 1 idle
   moveWay( 1500,     0,  1500,   0);  // 9: motor 2 idle
   moveWay( 3000,  3000,  3000,  90);  // 10: all at max
-
-  }
+  moveWay(682, -1668, 1300, 0);
+  moveWay(683, -1663, 1302, 0);
+  moveWay(-1668, 682, 1300, 0);
+  moveWay(-1668, 1300, 682, 0);
+}
 
 
   //BitMonitor PORTA
@@ -133,6 +136,7 @@ int main(void)
   GPIOD->PDOR;
 
 #else
+
   moveToInitPos(1000);
   moveWay(3019, 2441, 2418, 0 );
   moveWay(682, -1668, 1300, 0);

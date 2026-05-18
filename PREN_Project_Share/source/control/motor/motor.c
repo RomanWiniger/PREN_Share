@@ -22,6 +22,7 @@
 #include <limits.h>
 #include "globals.h"
 #include "sensor_config.h"
+#include "emergency.h"
 #include "reserve_pin_config.h"
 #include <string.h> // für memset für Array mit true Initialisierung
 
@@ -51,6 +52,9 @@ void motorInit(void){
 	#if ENABLE_ROT
 		FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0) ;
 	#endif
+
+	emergencyStop_Init();
+
 #if RAMP_MODE_NSTEP
 	FTM0->CONTROLS[6].CnSC =  FTM_CnSC_MSB(0) |FTM_CnSC_MSA(1) | FTM_CnSC_ELSB(0) | FTM_CnSC_ELSA(0) ; // Ramp Sequence Incrementer
 #endif
@@ -280,6 +284,9 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	RES1_GPIO_LOW(); // Monitoring ISR-Time
 #endif
 
+	// FOr Debugging
+	FTM0->CONTROLS[7].CnSC;
+
 	if(rot_Abs != 0){
 
 	        MotorRot_Step_Max = rot_Abs;  // FIX 1: war nie gesetzt, ISR vergleicht aber dagegen
@@ -456,6 +463,10 @@ void initGlobalsMove(void){
 	memset(Ramp_M1_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
 	memset(Ramp_M2_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
 	memset(Ramp_M3_Rem_Pending, 1, (RAMP_NSTEPS+1) * sizeof(bool));
+
+	memset(Motor1_Step_Corrector, 1, (NUM_CORRECTOR_LOOPS) * sizeof(uint32_t));
+	memset(Motor2_Step_Corrector, 1, (NUM_CORRECTOR_LOOPS) * sizeof(uint32_t));
+	memset(Motor3_Step_Corrector, 1, (NUM_CORRECTOR_LOOPS) * sizeof(uint32_t));
 
 	Ramp_Step_Curr=0;
 #endif
