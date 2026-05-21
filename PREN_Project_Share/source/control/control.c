@@ -39,6 +39,7 @@ uint16_t M3_Pause_min=0;
 uint16_t M1_Pause_Ramp=0;
 uint16_t M2_Pause_Ramp=0;
 uint16_t M3_Pause_Ramp=0;
+uint16_t Coil_before = 0;
 double Ramp_Factor_current =1;
 
 #if RAMP_MODE_TWOSTEP
@@ -158,12 +159,10 @@ void controlInit(){
 
 void newCommand(struct ReceivedCommand command)//therm.c calls this function if a new command was sent
 {
-	//////////////////////////////////////////////////////////////////
-	///  COIL ACTIVATION
-	//////////////////////////////////////////////////////////////////
-	if(command.ActCoil){coil_ctrl(true);}
-	else(coil_ctrl(false));
-
+	if(Coil_before){
+		if(command.ActCoil){coil_ctrl(true);}
+		else(coil_ctrl(false));
+	}
 	//////////////////////////////////////////////////////////////////
 	///  MOVE AND ROTATE
 	//////////////////////////////////////////////////////////////////
@@ -181,6 +180,16 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 		moveRotation(MR_Last_Step);
 #endif
 	}
+
+	//////////////////////////////////////////////////////////////////
+	///  COIL ACTIVATION
+	//////////////////////////////////////////////////////////////////
+
+	if(!Coil_before){
+		if(command.ActCoil){coil_ctrl(true);}
+		else(coil_ctrl(false));
+	}
+	Coil_before = command.ActCoil;
 }
 
 

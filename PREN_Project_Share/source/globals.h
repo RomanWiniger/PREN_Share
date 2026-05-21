@@ -73,8 +73,8 @@
 // Motor
 
 //Set Overall Parameters
-#define MOTOR_PULSE_US			1000		//Start Pulse to End Pulse
-#define MIN_STEP_DISTANCE_US	1000		//End Pulse to Start Pulse
+#define MOTOR_PULSE_US			400		//Start Pulse to End Pulse
+#define MIN_STEP_DISTANCE_US	400		//End Pulse to Start Pulse
 #define RAMP_DISTANCE_FACTOR	10		//*PREMIUM RAMP* *End Pulse to Start Pulse BEGINN LINEAR RAMP (if(<= 1) -> deactivated)
 #define FIRST_PULSE_START_MOD	1	//Start first Pulse at this Modulo Value of the Channel
 
@@ -87,7 +87,7 @@
 #define RAMP_ACTIVE				1	// Startup Ramp active
 #if RAMP_ACTIVE
 	#define RAMP_MODE_PS		0						// Prescaler modulation in 4 Steps
-	#define RAMP_MODE_NSTEP		0 && !RAMP_MODE_PS		// N Spedmodes: Startup and Run
+	#define RAMP_MODE_NSTEP		1 && !RAMP_MODE_PS		// N Spedmodes: Startup and Run
 	#define RAMP_MODE_PREMIUM	0 && !RAMP_MODE_TWOSTEP	// Calculation in ISR, Linear
 	#define RAMP_MODE_END		1
 
@@ -99,16 +99,19 @@
 	#define RAMP_DIV3			2	// PRESCALER MODE: UNUSED Divider for Stepnumber for 3. Ramp part
 
 	#if RAMP_MODE_END
-		#define RAMP_END_PS1		200  // Stage 1 Reduce Prescaler at Remaining Steps
-		#define RAMP_END_PS2		 100  // Stage 2 Reduce Prescaler at Remaining Steps
-		#define RAMP_END_PS3		 50  // Stage 3 Reduce Prescaler at Remaining Steps
-		#define RAMP_END_PS4		  10  // Stage 4 Reduce Prescaler at Remaining Steps
+		#define RAMP_END_PS1		300  // Stage 1 Reduce Prescaler at Remaining Steps
+		#define RAMP_END_PS2		40  // Stage 2 Reduce Prescaler at Remaining Steps
+		#define RAMP_END_PS3		20  // Stage 3 Reduce Prescaler at Remaining Steps
+		#define RAMP_END_PS4		1  // Stage 4 Reduce Prescaler at Remaining Steps
+
+
+
 	#endif
 
-  	#define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
+  	#define RAMP_NSTEPS				5		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
 	#if RAMP_MODE_NSTEP
-    	#define RAMP_NSTEPS_STEPS		20000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
-		#define RAMP_NSTEPS_STEP_PERC	100		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
+    	#define RAMP_NSTEPS_STEPS		6000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
+		#define RAMP_NSTEPS_STEP_PERC	50		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
 		#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
 	#endif
 #endif

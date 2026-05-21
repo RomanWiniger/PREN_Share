@@ -242,7 +242,7 @@ static tError startHandler(const char *args)
 
 static tError initHandler(const char *args)
 {
-	moveToInitPos(500);
+	moveToInitPos(300);
     termWriteLine("OK");
     return EC_SUCCESS;
 }
@@ -273,7 +273,6 @@ static tError cameraHandler(const char *args)
 
 static tError puzzleBeginHandler(const char *args)
 {
-	moveToInitPos(500);
     return EC_SUCCESS;
 }
 

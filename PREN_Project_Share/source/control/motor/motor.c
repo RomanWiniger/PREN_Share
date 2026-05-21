@@ -110,41 +110,71 @@ void motorInit(void){
 	MOTOR3_EN_SET_OUTPUT();
 #endif
 #if !SIM_SENSORS	// for debugging withour Sensors
-	moveToInitPos(1000);
+	moveToInitPos(500);
 #endif
 }
 
 
 void moveToInitPos(uint32_t toggle_US){
-	bool m1_run = true; 	// Debouce
-	bool m2_run = true; 	// Debouce
-	bool m3_run = true; 	// Debouce
+    bool m1_phase1 = true;
+    bool m2_phase1 = true;
+    bool m3_phase1 = true;
 
-	MOTOR1_EN_ENABLE();
-	MOTOR2_EN_ENABLE();
-	MOTOR3_EN_ENABLE();
+    const int32_t BACKOFF_STEPS = 800;
 
-	MOTOR1_DIR_REV();
-	MOTOR2_DIR_REV();
-	MOTOR3_DIR_REV();
-	while(true){
-		waitUs(toggle_US);
+    MOTOR1_EN_ENABLE();
+    MOTOR2_EN_ENABLE();
+    MOTOR3_EN_ENABLE();
 
-		// Check any Sensor  (set false if Motor is at init-Position
-		if(!SENSOR1_STATUS()){m1_run = false;}
-		if(!SENSOR2_STATUS()){m2_run = false;}
-		if(!SENSOR3_STATUS()){m3_run = false;}
+    // === Phase 1: Schnell zum Sensor ===
+    MOTOR1_DIR_REV();
+    MOTOR2_DIR_REV();
+    MOTOR3_DIR_REV();
 
-		// Step each (allowed) Motor
-		if(m1_run){MOTOR1_STEP_GPIO_TOGGLE();
-		}
-		if(m2_run){MOTOR2_STEP_GPIO_TOGGLE();
-		}
-		if(m3_run){MOTOR3_STEP_GPIO_TOGGLE();
-		}
+    while(m1_phase1 || m2_phase1 || m3_phase1){
+        waitUs(toggle_US);
 
-		if ((!m1_run)&&(!m2_run)&&(!m3_run)){break;}
-	}
+        if(!SENSOR1_STATUS()){ m1_phase1 = false; }
+        if(!SENSOR2_STATUS()){ m2_phase1 = false; }
+        if(!SENSOR3_STATUS()){ m3_phase1 = false; }
+
+        if(m1_phase1){ MOTOR1_STEP_GPIO_TOGGLE(); }
+        if(m2_phase1){ MOTOR2_STEP_GPIO_TOGGLE(); }
+        if(m3_phase1){ MOTOR3_STEP_GPIO_TOGGLE(); }
+    }
+
+    // === Backoff: Alle gleichzeitig weg vom Sensor ===
+    MOTOR1_DIR_FWD();
+    MOTOR2_DIR_FWD();
+    MOTOR3_DIR_FWD();
+
+    for(int32_t i = 0; i < BACKOFF_STEPS; i++){
+        waitUs(toggle_US*4);
+        MOTOR1_STEP_GPIO_TOGGLE();
+        MOTOR2_STEP_GPIO_TOGGLE();
+        MOTOR3_STEP_GPIO_TOGGLE();
+    }
+
+    // === Phase 2: Langsam zurück zum Sensor ===
+    MOTOR1_DIR_REV();
+    MOTOR2_DIR_REV();
+    MOTOR3_DIR_REV();
+
+    bool m1_phase2 = true;
+    bool m2_phase2 = true;
+    bool m3_phase2 = true;
+
+    while(m1_phase2 || m2_phase2 || m3_phase2){
+        waitUs(toggle_US * 4);
+
+        if(!SENSOR1_STATUS()){ m1_phase2 = false; }
+        if(!SENSOR2_STATUS()){ m2_phase2 = false; }
+        if(!SENSOR3_STATUS()){ m3_phase2 = false; }
+
+        if(m1_phase2){ MOTOR1_STEP_GPIO_TOGGLE(); }
+        if(m2_phase2){ MOTOR2_STEP_GPIO_TOGGLE(); }
+        if(m3_phase2){ MOTOR3_STEP_GPIO_TOGGLE(); }
+    }
 }
 
 int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
@@ -291,7 +321,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 
 	        MotorRot_Step_Max = rot_Abs;  // FIX 1: war nie gesetzt, ISR vergleicht aber dagegen
 
-	        MotorRot_Pause = MOTOR_MINPAUSE_MOD_TICK;
+	        MotorRot_Pause = MOTOR_MINPAUSE_MOD_TICK/2;
 
 	        // FIX 2: Timer stoppen und Counter resetten – genau wie in moveWay()
 	        ftm0StopClk();
