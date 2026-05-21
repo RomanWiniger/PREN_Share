@@ -249,9 +249,24 @@ static tError initHandler(const char *args)
 
 static tError cameraHandler(const char *args)
 {
-	moveWay(7500,0,7500,0);
+	struct ReceivedCommand commands;
+	char* current;
 
-	termWriteLine("OK");
+	#if COMMAND_BYTE
+		commands.CMD[0] = (bool)strtol(args, &current, 10);
+		commands.Steps1 = strtol(current, &current, 10);
+	#else
+		commands.Steps1 = strtol(args, &current, 10);
+	#endif
+		commands.Steps2 = strtol(current, &current, 10);
+		commands.Steps3 = strtol(current, &current, 10);
+		commands.StepsRot = strtol(current, &current, 10);
+		commands.ActCoil = (bool)strtol(current, &current, 10);
+		commands.ErrorHandling = (bool)strtol(current, &current, 10);
+
+		newCommand(commands);
+
+		termWriteLine("FINISH");
 
     return EC_SUCCESS;
 }
@@ -282,7 +297,7 @@ void commandInit(){
 	 &initCmd, "INIT", "Initialize robot", initHandler);
 
 	 termRegisterCommandLineHandler(
-	 &cameraCmd, "CAMERA", "Move to camera position", cameraHandler);
+	 &cameraCmd, "camera", "Move to camera position", cameraHandler);
 
 	 termRegisterCommandLineHandler(
 	 &puzzleBeginCmd, "PUZZLE_BEGIN", "Begin puzzle sequence", puzzleBeginHandler);

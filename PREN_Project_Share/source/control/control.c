@@ -171,7 +171,7 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 	if(command.CMD[0]){moveToInitPos();}
 #endif
 
-	if (((command.Steps1 != 0)||(command.Steps2 != 0)||(command.Steps3 != 0))&&(command.StepsRot != 0)&&(command.ErrorHandling==false)){
+	if (((command.Steps1 != 0)||(command.Steps2 != 0)||(command.Steps3 != 0)||(command.StepsRot != 0))&&(command.ErrorHandling==false)){
 		moveWay(command.Steps1,command.Steps2,command.Steps3, command.StepsRot);
 
 	}else if (command.ErrorHandling==true){
