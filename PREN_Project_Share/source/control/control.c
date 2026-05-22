@@ -40,6 +40,7 @@ uint16_t M1_Pause_Ramp=0;
 uint16_t M2_Pause_Ramp=0;
 uint16_t M3_Pause_Ramp=0;
 uint16_t Coil_before = 0;
+bool Ramp_Disabled = false; //ramp disabled
 double Ramp_Factor_current =1;
 
 #if RAMP_MODE_TWOSTEP
@@ -159,6 +160,7 @@ void controlInit(){
 
 void newCommand(struct ReceivedCommand command)//therm.c calls this function if a new command was sent
 {
+	Ramp_Disabled = !command.RampOn;//rampe
 	if(Coil_before){
 		if(command.ActCoil){coil_ctrl(true);}
 		else(coil_ctrl(false));
@@ -188,6 +190,7 @@ void newCommand(struct ReceivedCommand command)//therm.c calls this function if 
 	if(!Coil_before){
 		if(command.ActCoil){coil_ctrl(true);}
 		else(coil_ctrl(false));
+		waitMs(200);
 	}
 	Coil_before = command.ActCoil;
 }

@@ -110,7 +110,7 @@ void motorInit(void){
 	MOTOR3_EN_SET_OUTPUT();
 #endif
 #if !SIM_SENSORS	// for debugging withour Sensors
-	moveToInitPos(500);
+	moveToInitPos(100);
 #endif
 }
 
@@ -149,7 +149,7 @@ void moveToInitPos(uint32_t toggle_US){
     MOTOR3_DIR_FWD();
 
     for(int32_t i = 0; i < BACKOFF_STEPS; i++){
-        waitUs(toggle_US*4);
+        waitUs(toggle_US*10);
         MOTOR1_STEP_GPIO_TOGGLE();
         MOTOR2_STEP_GPIO_TOGGLE();
         MOTOR3_STEP_GPIO_TOGGLE();
@@ -165,7 +165,7 @@ void moveToInitPos(uint32_t toggle_US){
     bool m3_phase2 = true;
 
     while(m1_phase2 || m2_phase2 || m3_phase2){
-        waitUs(toggle_US * 4);
+        waitUs(toggle_US * 10);
 
         if(!SENSOR1_STATUS()){ m1_phase2 = false; }
         if(!SENSOR2_STATUS()){ m2_phase2 = false; }
@@ -287,10 +287,26 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	ftm0StopClk();
 
 #if RAMP_MODE_NSTEP
-	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = Ramp_M1_End_Rem_Ticks[0]; // Set Lemngth of first Ramp
-	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = Ramp_M2_End_Rem_Ticks[0]; // Set Lemngth of first Ramp
-	FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = Ramp_M3_End_Rem_Ticks[0]; // Set Lemngth of first Ramp
-	FTM0->CONTROLS[6].CnV = Ramp_Step_Ticks[1]; // Set Lemngth of first Ramp
+	if (!Ramp_Disabled) {
+		FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = Ramp_M1_End_Rem_Ticks[0];
+		FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = Ramp_M2_End_Rem_Ticks[0];
+		FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = Ramp_M3_End_Rem_Ticks[0];
+		FTM0->CONTROLS[6].CnV = Ramp_Step_Ticks[1];
+	} else {
+		Ramp_Step_Curr = RAMP_NSTEPS + 1;   // ISR springt sofort in Konstant-Pfad
+
+		Motor1_Pause = SLOW_PAUSE_MOD_TICK;
+		Motor2_Pause = SLOW_PAUSE_MOD_TICK;
+		Motor3_Pause = SLOW_PAUSE_MOD_TICK;
+
+		Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] = 0;
+		Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] = 0;
+		Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] = 0;
+
+		if(mot1_Abs) FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;
+		if(mot2_Abs) FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;
+		if(mot3_Abs) FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;
+	}
 #endif
 
 	FTM0->CNT=0;	// Reset the FTM0-Counter in order to not go go over an unintentional Overflos
@@ -300,13 +316,17 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 	FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 #if RAMP_MODE_NSTEP
+	if (!Ramp_Disabled) {
 	FTM0->CONTROLS[6].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
+	}
 #endif
 	if(mot1_Abs!=0){FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 	if(mot2_Abs!=0){FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 	if(mot3_Abs!=0){FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 #if RAMP_MODE_NSTEP
+	if (!Ramp_Disabled) {
 	FTM0->CONTROLS[6].CnSC |= FTM_CnSC_CHIE(1); //Ramp Sequence incrementer
+	}
 #endif
 
 #if DEBUG_MODE_ISR1
