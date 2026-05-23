@@ -1,7 +1,7 @@
 ../source/control/motor/calculation.c:41:9:calcPulsePause	1424	static
-../source/control/motor/calculation.c:574:6:analyzeSegment	272	static
-../source/control/motor/calculation.c:615:6:calcEndPoint	72	static
-../source/control/motor/calculation.c:659:6:segmentEndState	80	static
-../source/control/motor/calculation.c:707:6:resolveOverflows	40	static
-../source/control/motor/calculation.c:729:13:overflowCounter_16bit	32	static
-../source/control/motor/calculation.c:753:8:scalePercent	40	static
+../source/control/motor/calculation.c:554:6:analyzeSegment	272	static
+../source/control/motor/calculation.c:595:6:calcEndPoint	72	static
+../source/control/motor/calculation.c:639:6:segmentEndState	80	static
+../source/control/motor/calculation.c:687:6:resolveOverflows	40	static
+../source/control/motor/calculation.c:709:13:overflowCounter_16bit	32	static
+../source/control/motor/calculation.c:733:8:scalePercent	40	static

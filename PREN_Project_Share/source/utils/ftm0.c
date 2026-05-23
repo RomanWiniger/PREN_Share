@@ -285,7 +285,7 @@ void FTM0CH2_IRQHandler(void){
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 													// Do not manipulate!!!!!!
 #if DEBUG_MODE_ISR2
-	RES1_GPIO_HIGH(); // Monitoring ISR-Time
+	RES2_GPIO_HIGH(); // Monitoring ISR-Time
 #endif
 
 #if RAMP_MODE_NSTEP 	// Ramping Part
@@ -359,59 +359,15 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 	#if	(!(RAMP_MODE_TWOSTEP || RAMP_MODE_PREMIUM))
 			if(Motor2_Step_OF_Curr>0){
 				// Leave ChV with the current value
+				__asm__("nop");				// Bugfix missing Interrupts: DO NOT DELETE
 				Motor2_Step_OF_Curr--;
+				__asm__("nop");				// Bugfix missing Interrupts: DO NOT DELETE
 			}
 			else{
 				MOTOR2_STEP_GPIO_HIGH();
 				FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
 				Motor2_Step_Curr +=1;
 				Motor2_Step_OF_Curr = Motor2_Step_OF;			// Restart Overflow counter
-			}
-	#elif	RAMP_MODE_TWOSTEP
-			if(Ramp_twostep){
-				if(M2_Step_Ramp_OF_Curr>0){
-					// Leave ChV with the current value
-					M2_Step_Ramp_OF_Curr--;
-				}
-				else{
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor2_Step_Curr +=1;
-					M2_Step_Ramp_OF_Curr = M2_Step_Ramp_OF;			// Restart Overflow counter
-				}
-			}else{
-				if(Motor2_Step_OF_Curr>0){
-					// Leave ChV with the current value
-					Motor2_Step_OF_Curr--;
-				}else{
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor2_Step_Curr +=1;
-					Motor2_Step_OF_Curr = Motor2_Step_OF;			// Restart Overflow counter
-				}
-			}
-	#elif	RAMP_MODE_PREMIUM
-			if(Ramping_Premium){
-				if(M2_Step_Ramp_OF_Curr>0){
-					// Leave ChV with the current value
-					M2_Step_Ramp_OF_Curr--;
-				}
-				else{
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor2_Step_Curr +=1;
-					M2_Step_Ramp_OF_Curr = M2_Step_Ramp_OF;			// Restart Overflow counter
-				}
-			}else{
-				if(Motor2_Step_OF_Curr>0){
-					// Leave ChV with the current value
-					Motor2_Step_OF_Curr--;
-				}else{
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor2_Step_Curr +=1;
-					Motor2_Step_OF_Curr = Motor2_Step_OF;			// Restart Overflow counter
-				}
 			}
 	#endif
 
@@ -428,7 +384,7 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 }
 #endif
 #if DEBUG_MODE_ISR2
-		RES1_GPIO_LOW(); // Monitoring ISR-Time
+		RES2_GPIO_LOW(); // Monitoring ISR-Time
 #endif
 }
 
@@ -510,59 +466,15 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 	#if	(!(RAMP_MODE_TWOSTEP || RAMP_MODE_PREMIUM))
 			if(Motor3_Step_OF_Curr>0){
 				// Leave ChV with the current value
+				__asm__("nop");				// Bugfix missing Interrupts: DO NOT DELETE
 				Motor3_Step_OF_Curr--;
+				__asm__("nop");				// Bugfix missing Interrupts: DO NOT DELETE
 			}
 			else{
 				MOTOR3_STEP_GPIO_HIGH();
 				FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
 				Motor3_Step_Curr +=1;
 				Motor3_Step_OF_Curr = Motor3_Step_OF;			// Restart Overflow counter
-			}
-	#elif	RAMP_MODE_TWOSTEP
-			if(Ramp_twostep){
-				if(M3_Step_Ramp_OF_Curr>0){
-					// Leave ChV with the current value
-					M3_Step_Ramp_OF_Curr--;
-				}
-				else{
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor3_Step_Curr +=1;
-					M3_Step_Ramp_OF_Curr = M3_Step_Ramp_OF;			// Restart Overflow counter
-				}
-			}else{
-				if(Motor3_Step_OF_Curr>0){
-					// Leave ChV with the current value
-					Motor3_Step_OF_Curr--;
-				}else{
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor3_Step_Curr +=1;
-					Motor3_Step_OF_Curr = Motor3_Step_OF;			// Restart Overflow counter
-				}
-			}
-	#elif	RAMP_MODE_PREMIUM
-			if(Ramping_Premium){
-				if(M3_Step_Ramp_OF_Curr>0){
-					// Leave ChV with the current value
-					M3_Step_Ramp_OF_Curr--;
-				}
-				else{
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor3_Step_Curr +=1;
-					M3_Step_Ramp_OF_Curr = M3_Step_Ramp_OF;			// Restart Overflow counter
-				}
-			}else{
-				if(Motor3_Step_OF_Curr>0){
-					// Leave ChV with the current value
-					Motor3_Step_OF_Curr--;
-				}else{
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor3_Step_Curr +=1;
-					Motor3_Step_OF_Curr = Motor3_Step_OF;			// Restart Overflow counter
-				}
 			}
 	#endif
 
