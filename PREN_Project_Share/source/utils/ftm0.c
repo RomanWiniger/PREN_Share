@@ -622,20 +622,25 @@ void FTM0CH6_IRQHandler(void){
 
 void FTM0CH7_IRQHandler(void){
 	FTM0->CONTROLS[7].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
-	termWrite("ERROR");
 
+	waitMs(5);
+							// Emergency Stop is is on PORT A, PCR 2.
+	if(GPIOA->PDIR&(1<<2)){ // Check if PortDirectionInputRegister for Port 2 is still high
+		termWrite("ERROR");
 
-	MOTOR1_STEP_GPIO_LOW();
-	MOTOR2_STEP_GPIO_LOW();
-	MOTOR3_STEP_GPIO_LOW();
-	MOTORROT_STEP_GPIO_LOW();	// Rotation
-	RES1_GPIO_LOW(); 			// Coil Deactivate
+		MOTOR1_STEP_GPIO_LOW();
+		MOTOR2_STEP_GPIO_LOW();
+		MOTOR3_STEP_GPIO_LOW();
+		MOTORROT_STEP_GPIO_LOW();	// Rotation
+		RES1_GPIO_LOW(); 			// Coil Deactivate
 
-	while(true){ // Stay Forever
-		FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);
-		FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);
-		FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);
-		FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);
-		FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHIE(1);// Deactivate Ramp Counter
+		while(true){ // Stay Forever
+			FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);
+			FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);
+			FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);
+			FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHIE(1);
+			FTM0->CONTROLS[5].CnSC &= ~FTM_CnSC_CHIE(1);// Deactivate Ramp Counter
+		}
+	// If not: leave without doing anything
 	}
 }
