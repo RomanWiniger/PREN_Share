@@ -192,18 +192,15 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	bool rot_Dir = FWD;
 
 	int32_t mostMotor = 0;
+#if RAMP_MODE_END
 	int32_t rem_steps = 0;
+#endif
 	int16_t ramp_mode = 0;
 
 	//////////////////////////////////////////////////////////////////
 	///  Init Ramp Mode
 	//////////////////////////////////////////////////////////////////
-#if RAMP_MODE_TWOSTEP
-	Ramp_twostep = true;
-#endif
-#if RAMP_MODE_PREMIUM
-	Ramping_Premium = true;
-#endif
+
 
 	//////////////////////////////////////////////////////////////////
 	///  GET DIRECTION
@@ -360,12 +357,10 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	///  START TIMERS
 	//////////////////////////////////////////////////////////////////
 	RES2_GPIO_HIGH(); // Monitoring
-#if RAMP_ACTIVE && RAMP_MODE_PS
-	ftm0StartClk(CLK_SRC_GLOBAL,(PS_GLOBAL+4));
-#else
+
 	ftm0EnableIRQ();
 	ftm0StartClk((CLK_SRC_GLOBAL),PS_GLOBAL);
-#endif
+
 
 	RES2_GPIO_LOW(); // Monitoring ISR-Time
 
@@ -377,13 +372,13 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 
 	// All Counters must reach Max Steps, and Innterrupts must be disabled
 	// Interrupt disabeling is done in the ISR in the corresponding Channel
-
-	bool reduce[4] = {true,true,true,true}; // First Pass index
-
+	#if RAMP_MODE_END
+		bool reduce[4] = {true,true,true,true}; // First Pass index
+	#endif
 	while (true){
 
 	#if RAMP_MODE_END
-		if (ramp_mode < 4){
+//		if (ramp_mode < 4){
 			if(mostMotor ==1){rem_steps = mot1_Abs-Motor1_Step_Curr;}
 			if(mostMotor ==2){rem_steps = mot2_Abs-Motor2_Step_Curr;}
 			if(mostMotor ==3){rem_steps = mot3_Abs-Motor3_Step_Curr;}
@@ -401,7 +396,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+4));
 				reduce[3] = false;
 			}
-		}
+//		}
 	#endif
 
 		if((Motor1_Step_Curr>=mot1_Abs)&&(Motor2_Step_Curr>=mot2_Abs)&&(Motor3_Step_Curr>=mot3_Abs)&&(MotorRot_Step_Curr >= rot_Abs)){
@@ -411,58 +406,6 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 		            ((FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC & FTM_CnSC_CHIE(1))==0)){
 				break;}
 		}
-#if RAMP_MODE_PS
-		if (ramp_mode < 4){
-			if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
-			if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
-			if(mostMotor ==3){tgmp_steps = Motor3_Step_Curr;}
-
-			if (ramp_mode ==0){
-				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV1)){
-					RES2_GPIO_HIGH();
-					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+3));
-					ftm0ChangePS(CLK_SRC_GLOBAL,(PS_GLOBAL+3));
-					RES2_GPIO_LOW();
-					ramp_mode++;
-				}
-				;
-			}else if(ramp_mode ==1){
-				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV2)){
-					RES2_GPIO_HIGH();
-					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+2));
-					ftm0ChangePS(CLK_SRC_GLOBAL,(PS_GLOBAL+2));
-					RES2_GPIO_LOW();
-					ramp_mode++;
-				}
-				;
-			}else if(ramp_mode ==2){
-				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV3)){
-					RES2_GPIO_HIGH();
-					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+1));
-					ftm0ChangePS(CLK_SRC_GLOBAL, (PS_GLOBAL+1));
-					RES2_GPIO_LOW();
-					ramp_mode++;
-				}
-				;
-			}else if(ramp_mode ==3){
-				if (tmp_steps >=(RAMP_NUMB_STEPS)){
-					RES2_GPIO_HIGH();
-					ftm0ChangePS(CLK_SRC_GLOBAL,PS_GLOBAL);
-					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL));
-					RES2_GPIO_LOW();
-					ramp_mode++;
-				}
-			}
-		}
-#elif RAMP_MODE_NSTEP
-		// code here
-
-#elif RAMP_MODE_PREMIUM
-		if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
-		if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
-		if(mostMotor ==3){tmp_steps = Motor3_Step_Curr;}
-		if(tmp_steps>=RAMP_NUMB_STEPS){Ramping_Premium=false;}
-#endif
 	}
 	initGlobalsMove();
 	initGlobalsRot();

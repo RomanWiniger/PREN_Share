@@ -229,11 +229,11 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 	}
 
 }else{		// Ramp is done
-#endif
 	// Drain any End_Rem_Ticks overflow periods before switching to full speed.
 	if(Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] > 0){
 		Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS]--;
 	}else{
+#endif
 	// If Mx_Step is false: 	Output was high before
 		if (MOTOR1_STEP_STATUS()){
 			MOTOR1_STEP_GPIO_LOW();									// Output was toggled to true in the current ISR
@@ -270,10 +270,10 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
-	} // end overflow drain else
 
 #if RAMP_MODE_NSTEP
-}
+	} // end overflow drain else
+	}
 #endif
 
 #if DEBUG_MODE_ISR1
@@ -333,10 +333,10 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 	}
 
 }else{		// Ramp is done
-#endif
 	if(Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] > 0){
 		Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS]--;
 	}else{
+#endif
 	// If Mx_Step is true: 	Output was high before
 		if (MOTOR2_STEP_STATUS()){
 			MOTOR2_STEP_GPIO_LOW();
@@ -422,9 +422,10 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Motor2_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
-	} // end overflow drain else
+
 
 #if RAMP_MODE_NSTEP
+	} // end overflow drain else
 }
 #endif
 #if DEBUG_MODE_ISR2
@@ -484,10 +485,10 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 	}
 
 }else{		// Ramp is done
-#endif
 	if(Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] > 0){
 		Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS]--;
 	}else{
+#endif
 	// If Mx_Step is true: 	Output was high before
 		if (MOTOR3_STEP_STATUS()){
 			MOTOR3_STEP_GPIO_LOW();
@@ -573,9 +574,9 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			Motor3_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
-	} // end overflow drain else
 
 #if RAMP_MODE_NSTEP
+	} // end overflow drain else
 }
 #endif
 #if DEBUG_MODE_ISR3

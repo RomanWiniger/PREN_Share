@@ -70,15 +70,17 @@ double Ramp_Factor_current =1;
 #endif
 
 
-	uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
-	uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
-	uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+
 
 #if RAMP_MODE_NSTEP
 
 	int64_t Motor1_Pause_Full=0;
 	int64_t Motor2_Pause_Full=0;
 	int64_t Motor3_Pause_Full=0;
+
+	uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
+	uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 
 	uint16_t Ramp_Step_Curr=0;	// first ISR sets to step 1
 	uint16_t Ramp_Step_Ticks[RAMP_NSTEPS+1]={0};

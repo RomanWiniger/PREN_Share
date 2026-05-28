@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DEBUG_MODE			0
+#define DEBUG_MODE			1
 #define TEST_SEQUENCE		(0 && DEBUG_MODE) // Nur aktiv im DEBUG_MODE
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
 #define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
-#define SIM_SENSORS			0 	// Disable MoveToInitPosin motorinit, when no sensor is attached
+#define SIM_SENSORS			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #define ISR_MONITOR			0	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #if DEBUG_MODE
 #define DEBUG_MODE_SEQ		1	// Debug Channel 6 Sequence Incrementer
@@ -85,41 +85,31 @@ extern bool Ramp_Disabled; //flag für rampenaktivierung
 
 #define NUM_CORRECTOR_LOOPS		10	// Rounding Error Correction
 
-#define RAMP_ACTIVE				1	// Startup Ramp active
-#if RAMP_ACTIVE
-	#define RAMP_MODE_PS		0						// Prescaler modulation in 4 Steps
-	#define RAMP_MODE_NSTEP		0 && !RAMP_MODE_PS		// N Spedmodes: Startup and Run
-	#define RAMP_MODE_PREMIUM	0 && !RAMP_MODE_TWOSTEP	// Calculation in ISR, Linear
-	#define RAMP_MODE_END		0
+//////////////////////////////////////////////////////
+// RAMP ACTIVATION
+//////////////////////////////////////////////////////
+#define RAMP_MODE_NSTEP		1 		// N Spedmodes: Startup and Run
+#define RAMP_MODE_END		1
 
 
-	#define RAMP_NUMB_STEPS		50		//Fastest Motor: Ramp from start to this step number
-
-	#define RAMP_DIV1			20	// PRESCALER MODE: UNUSED Divider for Stepnumber for 1. Ramp part
-	#define RAMP_DIV2			10	// PRESCALER MODE: UNUSED Divider for Stepnumber for 2. Ramp part
-	#define RAMP_DIV3			0	// PRESCALER MODE: UNUSED Divider for Stepnumber for 3. Ramp part
-
-	#if RAMP_MODE_END
-		#define RAMP_END_PS1		1500  // Stage 1 Reduce Prescaler at Remaining Steps
-		#define RAMP_END_PS2		500  // Stage 2 Reduce Prescaler at Remaining Steps
-		#define RAMP_END_PS3		0  // Stage 3 Reduce Prescaler at Remaining Steps
-		#define RAMP_END_PS4		0  // Stage 4 Reduce Prescaler at Remaining Steps
-
-
-
-	#endif
-
-  	#define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
-	#if RAMP_MODE_NSTEP
-    	#define RAMP_NSTEPS_STEPS		6000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
-		#define RAMP_NSTEPS_STEP_PERC	100		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
-		#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
-	#endif
+//////////////////////////////////////////////////////
+// RAMP Config
+//////////////////////////////////////////////////////
+#if RAMP_MODE_NSTEP
+	#define RAMP_NSTEPS				10		// NSTEP MODE: Number of Steps in Ramp (min. 2)			@Pascal: Anzahl Schritte für die Ramoe
+	#define RAMP_NSTEPS_STEPS		20000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
+	#define RAMP_NSTEPS_STEP_PERC	100		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
+	#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
 #endif
 
-#if RAMP_MODE_PREMIUM
-	#define ADD_TICK_PER_STEP	(((RAMP_DISTANCE_FACTOR-1)*MOTOR_MINPAUSE_MOD_TICK)/RAMP_NUMB_STEPS)
+#if RAMP_MODE_END
+	#define RAMP_END_PS1		1500  // Stage 1 Reduce Prescaler at Remaining Steps
+	#define RAMP_END_PS2		500  // Stage 2 Reduce Prescaler at Remaining Steps
+	#define RAMP_END_PS3		0  // Stage 3 Reduce Prescaler at Remaining Steps
+	#define RAMP_END_PS4		0  // Stage 4 Reduce Prescaler at Remaining Steps
 #endif
+
+
 
 
 //////////////////////////////////////////////////////
@@ -164,43 +154,17 @@ extern int32_t Motor1_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tic
 extern int32_t Motor2_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tick to Stepp
 extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tick to Stepp
 
-#if RAMP_MODE_TWOSTEP
-	extern bool Ramp_twostep;
-	extern int32_t M1_Step_Ramp_OF;	// Amount of Overflows 0xFFFF
-	extern int32_t M2_Step_Ramp_OF;	// Amount of Overflows 0xFFFF
-	extern int32_t M3_Step_Ramp_OF;	// Amount of Overflows 0xFFFF
-	extern int32_t M1_Step_Ramp_OF_Curr;	// Current Amount of Overflows 0xFFFF
-	extern int32_t M2_Step_Ramp_OF_Curr;	// Current Amount of Overflows 0xFFFF
-	extern int32_t M3_Step_Ramp_OF_Curr;	// Current Amount of Overflows 0xFFFF
-#endif
-
-#if RAMP_MODE_PREMIUM
-	extern bool Ramping_Premium;
-	extern int64_t M1_PR_Ramp_TCK_Add; // Ticks to Add per Step WHILE RAMPING
-	extern int64_t M2_PR_Ramp_TCK_Add; // Ticks to Add per Step WHILE RAMPING
-	extern int64_t M3_PR_Ramp_TCK_Add; // Ticks to Add per Step WHILE RAMPING
-	extern int16_t M1_PR_Ramp_Pause[]; // Pause Ticks per Step
-	extern int16_t M2_PR_Ramp_Pause[]; // Pause Ticks per Step
-	extern int16_t M3_PR_Ramp_Pause[]; // Pause Ticks per Step
-	extern int16_t M1_PR_Ramp_OF[]; // Overflow Count
-	extern int16_t M2_PR_Ramp_OF[]; // Overflow Count
-	extern int16_t M3_PR_Ramp_OF[]; // Overflow Count
-	extern int16_t M1_PR_Ramp_OF_Curr; // Overflow Count Current
-	extern int16_t M2_PR_Ramp_OF_Curr; // Overflow Count Current
-	extern int16_t M3_PR_Ramp_OF_Curr; // Overflow Count Current
-#endif
-
-
-
-	extern uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
-	extern uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
-	extern uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
 
 #if RAMP_MODE_NSTEP
 
 	extern int64_t Motor1_Pause_Full;
 	extern int64_t Motor2_Pause_Full;
 	extern int64_t Motor3_Pause_Full;
+
+
+	extern uint16_t Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
+	extern uint16_t Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
+	extern uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1];
 
 	extern uint16_t Ramp_Step_Curr;
 	extern uint16_t Ramp_Step_Ticks[RAMP_NSTEPS+1];
