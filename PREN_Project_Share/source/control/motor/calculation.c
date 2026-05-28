@@ -82,6 +82,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 				#if RAMP_MODE_NSTEP
 					Motor2_Pause_Full = MOTOR_MINPAUSE_MOD_TICK;
 				#endif
+
 				tmp_M2_Pause = MOTOR_MINPAUSE_MOD_TICK;
 				totalTicks=((int64_t)MOTOR_MINPAUSE_MOD_TICK +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot2;
 			}else{
@@ -190,7 +191,26 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		};
 #endif
 
+#if RAMP_MODE_TWOSTEP
+		tmp_M1_Ramp_Pause= 3*tmp_M1_Pause;
+		tmp_M2_Ramp_Pause= 3*tmp_M2_Pause;
+		tmp_M3_Ramp_Pause= 3*tmp_M3_Pause;
 
+		do{		// If Modulo Overflow: Count how many INT16_MAX Overflows occur
+			if (tmp_M1_Ramp_Pause>=UINT16_MAX){
+				tmp_M1_Ramp_Pause=(tmp_M1_Ramp_Pause-UINT16_MAX);
+				tmp_M1_Ramp_OF_CNT +=1;
+			}
+			if (tmp_M2_Ramp_Pause>=UINT16_MAX){
+				tmp_M2_Ramp_Pause=(tmp_M2_Ramp_Pause-UINT16_MAX);
+				tmp_M2_Ramp_OF_CNT +=1;
+			}
+			if (tmp_M3_Ramp_Pause>=UINT16_MAX){
+				tmp_M3_Ramp_Pause=(tmp_M3_Ramp_Pause-UINT16_MAX);
+				tmp_M3_Ramp_OF_CNT +=1;
+			}
+		}while((tmp_M1_Ramp_Pause>=UINT16_MAX || tmp_M2_Ramp_Pause>=UINT16_MAX||tmp_M3_Ramp_Pause>=UINT16_MAX));
+#endif
 
 		//////////////////////////////////////////////////////////////////
 		///  CALCULTATE INITIAL PAUSE TICKS

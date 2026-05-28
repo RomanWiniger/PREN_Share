@@ -9,8 +9,8 @@
 ../source/com/term.c:188:6:termDoWork	520	static
 ../source/com/term.c:210:6:termInit	16	static
 ../source/com/term.c:221:15:startHandler	48	static
-../source/com/term.c:244:15:initHandler	16	static
-../source/com/term.c:251:15:cameraHandler	48	static
-../source/com/term.c:276:15:puzzleBeginHandler	16	static
-../source/com/term.c:281:15:puzzleEndHandler	16	static
-../source/com/term.c:288:6:commandInit	8	static
+../source/com/term.c:243:15:initHandler	16	static
+../source/com/term.c:250:15:cameraHandler	48	static
+../source/com/term.c:274:15:puzzleBeginHandler	16	static
+../source/com/term.c:279:15:puzzleEndHandler	16	static
+../source/com/term.c:286:6:commandInit	8	static

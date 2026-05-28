@@ -388,30 +388,19 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 			if(mostMotor ==2){rem_steps = mot2_Abs-Motor2_Step_Curr;}
 			if(mostMotor ==3){rem_steps = mot3_Abs-Motor3_Step_Curr;}
 
-			#if RAMP_END_PS1>0
 			if((RAMP_END_PS2 < rem_steps)&&(rem_steps <= RAMP_END_PS1)&&reduce[0]){
 				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+1));
 				reduce[0] = false;
-			}
-			#endif
-			#if RAMP_END_PS2>0
-			else if((RAMP_END_PS3 < rem_steps)&&(rem_steps <= RAMP_END_PS2)&&reduce[1]){
+			}else if((RAMP_END_PS3 < rem_steps)&&(rem_steps <= RAMP_END_PS2)&&reduce[1]){
 				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+2));
 				reduce[1] = false;
-			}
-			#endif
-			#if RAMP_END_PS3>0
-			else if((RAMP_END_PS4 < rem_steps)&&(rem_steps <= RAMP_END_PS3)&&reduce[2]){
+			}else if((RAMP_END_PS4 < rem_steps)&&(rem_steps <= RAMP_END_PS3)&&reduce[2]){
 				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+3));
 				reduce[2] = false;
-			}
-			#endif
-			#if RAMP_END_PS4>0
-			else if((rem_steps <= RAMP_END_PS4)&&reduce[3]){
+			}else if((rem_steps <= RAMP_END_PS4)&&reduce[3]){
 				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+4));
 				reduce[3] = false;
 			}
-			#endif
 		}
 	#endif
 
@@ -422,6 +411,58 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 		            ((FTM0->CONTROLS[MOTORROT_STEP_TIMER_CHNL].CnSC & FTM_CnSC_CHIE(1))==0)){
 				break;}
 		}
+#if RAMP_MODE_PS
+		if (ramp_mode < 4){
+			if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
+			if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
+			if(mostMotor ==3){tgmp_steps = Motor3_Step_Curr;}
+
+			if (ramp_mode ==0){
+				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV1)){
+					RES2_GPIO_HIGH();
+					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+3));
+					ftm0ChangePS(CLK_SRC_GLOBAL,(PS_GLOBAL+3));
+					RES2_GPIO_LOW();
+					ramp_mode++;
+				}
+				;
+			}else if(ramp_mode ==1){
+				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV2)){
+					RES2_GPIO_HIGH();
+					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+2));
+					ftm0ChangePS(CLK_SRC_GLOBAL,(PS_GLOBAL+2));
+					RES2_GPIO_LOW();
+					ramp_mode++;
+				}
+				;
+			}else if(ramp_mode ==2){
+				if (tmp_steps >=(RAMP_NUMB_STEPS/RAMP_DIV3)){
+					RES2_GPIO_HIGH();
+					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL+1));
+					ftm0ChangePS(CLK_SRC_GLOBAL, (PS_GLOBAL+1));
+					RES2_GPIO_LOW();
+					ramp_mode++;
+				}
+				;
+			}else if(ramp_mode ==3){
+				if (tmp_steps >=(RAMP_NUMB_STEPS)){
+					RES2_GPIO_HIGH();
+					ftm0ChangePS(CLK_SRC_GLOBAL,PS_GLOBAL);
+					//FTM0->SC = FTM_SC_CLKS(CLK_SRC_GLOBAL) |  FTM_SC_PS((PS_GLOBAL));
+					RES2_GPIO_LOW();
+					ramp_mode++;
+				}
+			}
+		}
+#elif RAMP_MODE_NSTEP
+		// code here
+
+#elif RAMP_MODE_PREMIUM
+		if(mostMotor ==1){tmp_steps = Motor1_Step_Curr;}
+		if(mostMotor ==2){tmp_steps = Motor2_Step_Curr;}
+		if(mostMotor ==3){tmp_steps = Motor3_Step_Curr;}
+		if(tmp_steps>=RAMP_NUMB_STEPS){Ramping_Premium=false;}
+#endif
 	}
 	initGlobalsMove();
 	initGlobalsRot();
@@ -482,10 +523,13 @@ void initGlobalsMove(void){
 
 	for (int i = 0; i < NUM_CORRECTOR_LOOPS; i++) { //
 	    Motor1_Step_Corrector[i] = 0;
+	}
+	for (int i = 0; i < NUM_CORRECTOR_LOOPS; i++) { //
 	    Motor2_Step_Corrector[i] = 0;
+	}
+	for (int i = 0; i < NUM_CORRECTOR_LOOPS; i++) { //
 	    Motor3_Step_Corrector[i] = 0;
 	}
-
 }
 
 void initGlobalsRot(void){
