@@ -16,9 +16,9 @@
 #include "globals.h"
 #include "motor_config.h"
 #include "term.h"
+#include "wait.h"
 #if DEBUG_MODE
 	#include "reserve_pin_config.h"
-	#include "wait.h"
 #endif
 
 /**
