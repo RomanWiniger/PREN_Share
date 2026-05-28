@@ -75,6 +75,7 @@ double Ramp_Factor_current =1;
 	uint16_t Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 
 #if RAMP_MODE_NSTEP
+
 	int64_t Motor1_Pause_Full=0;
 	int64_t Motor2_Pause_Full=0;
 	int64_t Motor3_Pause_Full=0;
