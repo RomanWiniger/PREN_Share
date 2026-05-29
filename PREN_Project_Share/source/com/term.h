@@ -35,7 +35,7 @@ struct ReceivedCommand{
 	int32_t Steps3; //steps of motor3
 	int32_t StepsRot; //steps of the rotation Motor
 	bool ActCoil; //true if coil should be activated
-	bool RampOn; //true if a ramp is activated
+	bool Disabled; //true if a ramp is activated
 	bool ErrorHandling; //in case of error go to the last position
 };
 

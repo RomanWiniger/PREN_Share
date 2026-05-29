@@ -16,5 +16,4 @@ C:\Users\micro\git\PREN_Share\PREN_Project_Share\CMSIS/core_cm4.h:1814:22:__NVIC
 ../source/utils/ftm0.c:284:6:FTM0CH2_IRQHandler	16	static
 ../source/utils/ftm0.c:436:6:FTM0CH4_IRQHandler	16	static
 ../source/utils/ftm0.c:589:6:FTM0CH5_IRQHandler	4	static
-../source/utils/ftm0.c:622:6:FTM0CH6_IRQHandler	4	static
 ../source/utils/ftm0.c:712:6:FTM0CH7_IRQHandler	8	static

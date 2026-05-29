@@ -233,7 +233,7 @@ static tError startHandler(const char *args)
 	commands.Steps3 = strtol(current, &current, 10);
 	commands.StepsRot = strtol(current, &current, 10);
 	commands.ActCoil = (bool)strtol(current, &current, 10);
-	commands.RampOn        = (bool)strtol(current, &current, 10);
+	commands.Disabled = (bool)strtol(current, &current, 10);
 	commands.ErrorHandling = (bool)strtol(current, &current, 10);
 
 	newCommand(commands);
@@ -263,7 +263,7 @@ static tError cameraHandler(const char *args)
 		commands.Steps3 = strtol(current, &current, 10);
 		commands.StepsRot = strtol(current, &current, 10);
 		commands.ActCoil = (bool)strtol(current, &current, 10);
-		commands.RampOn        = (bool)strtol(current, &current, 10);
+		commands.Disabled = (bool)strtol(current, &current, 10);
 		commands.ErrorHandling = (bool)strtol(current, &current, 10);
 
 		newCommand(commands);

@@ -210,7 +210,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 
 
 #if RAMP_MODE_NSTEP
-		if(Ramp_Disabled == true){
+		if(Ramp_Disabled == False){
 		//////////////////////////////////////////////////////////////////
 		///  SET GLOBALS FOR RAMP (NSTEP)
 		//////////////////////////////////////////////////////////////////
@@ -338,7 +338,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 #endif
 
 #if RAMP_MODE_NSTEP
-		if(Ramp_Disabled == true){
+		if(Ramp_Disabled == False){
 		// Start at step 1 so the first CH6 firing uses Ramp_Step_Ticks[1] (large
 		// enough that CnV += N never overshoots CNT inside the ISR).
 		Ramp_Step_Curr = 1;
