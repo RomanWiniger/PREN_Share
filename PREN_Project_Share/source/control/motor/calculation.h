@@ -8,6 +8,6 @@
 #ifndef CONTROL_MOTOR_CALCULATION_H_
 #define CONTROL_MOTOR_CALCULATION_H_
 
-int32_t calcPulsePause(int32_t,int32_t, int32_t);
+int32_t calcPulsePause(int32_t,int32_t, int32_t, bool Ramp_Disabled);
 
 #endif /* CONTROL_MOTOR_CALCULATION_H_ */

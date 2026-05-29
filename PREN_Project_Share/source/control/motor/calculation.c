@@ -38,7 +38,7 @@ void calcCheckPending(bool pend[RAMP_NSTEPS+1],uint16_t tickEnd[RAMP_NSTEPS]);
 
 
 
-int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
+int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabled){
 	uint32_t mostMotor;
 	uint64_t totalTicks;
 	uint64_t totalTicksPauseM1;
@@ -152,6 +152,11 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		}
 		if(Mot3==0){tmp_M3_Pause =0;}
 
+		if(Ramp_Disabled == true){
+		tmp_M1_Pause = tmp_M1_Pause*3;
+		tmp_M2_Pause = tmp_M2_Pause*3;
+		tmp_M3_Pause = tmp_M3_Pause*3;
+		}
 
 #if OVERFLOW_HANDLING
 		//////////////////////////////////////////////////////////////////
@@ -205,6 +210,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 
 
 #if RAMP_MODE_NSTEP
+		if(Ramp_Disabled == true){
 		//////////////////////////////////////////////////////////////////
 		///  SET GLOBALS FOR RAMP (NSTEP)
 		//////////////////////////////////////////////////////////////////
@@ -311,12 +317,14 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 			Ramp_M3_Pause_Ticks_OF_Curr[i]    = Ramp_M3_Pause_Ticks_OF[i];
 			Ramp_M3_End_Rem_Ticks_OF_Curr[i]  = Ramp_M3_End_Rem_Ticks_OF[i];
 		}
+		}
 #endif
 
 		//////////////////////////////////////////////////////////////////
 		///  SET INITIAL CHANNEL VALUES
 		//////////////////////////////////////////////////////////////////
 #if !RAMP_MODE_NSTEP
+
 		// Set Initial Pause Value
 		if(Mot1 !=0){
 			if(mostMotor==1){FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M1_Pause_init);}
@@ -330,6 +338,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 #endif
 
 #if RAMP_MODE_NSTEP
+		if(Ramp_Disabled == true){
 		// Start at step 1 so the first CH6 firing uses Ramp_Step_Ticks[1] (large
 		// enough that CnV += N never overshoots CNT inside the ISR).
 		Ramp_Step_Curr = 1;
@@ -346,6 +355,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3){
 		}
 
 		FTM0->CONTROLS[6].CnV=RAMP_NSTEPS_FIRST_MOD; // earliest ISR -> will set CHnV for Motors above
+		}
 #endif
 		//////////////////////////////////////////////////////////////////
 		///  SET OUTPUTS TO GLOBALS
@@ -413,6 +423,7 @@ void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t e
 		}
 	}
 }
+
 #endif
 
 #if RAMP_MODE_NSTEP

@@ -106,11 +106,11 @@ void ftm0ReducePS(int CLK_Source, int Prescaler)
 	// set CnV=1 so the motor fires immediately after restart instead of ~65535 ticks later.
 	uint16_t cnv;
 	cnv = FTM0->CONTROLS[1].CnV;
-	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = (cnv > val) ? (cnv - val) : UINT16_MAX-(val-cnv);
+	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = (cnv > val) ? (cnv - val) : 1u;
 	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHF(1);
 
 	cnv = FTM0->CONTROLS[2].CnV;
-	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = (cnv > val) ? (cnv - val) : UINT16_MAX-(val-cnv);
+	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = (cnv > val) ? (cnv - val) : 1u;
 	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHF(1);
 
 	cnv = FTM0->CONTROLS[4].CnV;

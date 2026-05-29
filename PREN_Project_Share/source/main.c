@@ -189,6 +189,7 @@ int main(void)
   GPIOD->PDOR;
 
 #else
+  moveToInitPos(300);
   while(TRUE)
     {
       termDoWork();//lauscht an der UART Verbindung

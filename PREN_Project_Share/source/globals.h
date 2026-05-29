@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DEBUG_MODE			1
+#define DEBUG_MODE			0
 #define TEST_SEQUENCE		(0 && DEBUG_MODE) // Nur aktiv im DEBUG_MODE
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
@@ -73,8 +73,8 @@ extern bool Ramp_Disabled; //flag für rampenaktivierung
 // Motor
 
 //Set Overall Parameters
-#define MOTOR_PULSE_US			1000		//Start Pulse to End Pulse
-#define MIN_STEP_DISTANCE_US	1000		//End Pulse to Start Pulse
+#define MOTOR_PULSE_US			500		//Start Pulse to End Pulse
+#define MIN_STEP_DISTANCE_US	500		//End Pulse to Start Pulse
 #define SLOW_PAUSE_MOD_TICK   	1500	//pick und place geschwindigkeit
 #define RAMP_DISTANCE_FACTOR	10		//*PREMIUM RAMP* *End Pulse to Start Pulse BEGINN LINEAR RAMP (if(<= 1) -> deactivated)
 #define FIRST_PULSE_START_MOD	1	//Start first Pulse at this Modulo Value of the Channel

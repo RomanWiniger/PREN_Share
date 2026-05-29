@@ -177,7 +177,7 @@ void moveToInitPos(uint32_t toggle_US){
     }
 }
 
-int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
+int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps, bool Ramp_Disabled){
 
 
 
@@ -195,7 +195,6 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 #if RAMP_MODE_END
 	int32_t rem_steps = 0;
 #endif
-	int16_t ramp_mode = 0;
 
 	//////////////////////////////////////////////////////////////////
 	///  Init Ramp Mode
@@ -280,11 +279,11 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	///  SET TIMER VALUES
 	//////////////////////////////////////////////////////////////////
 
-	mostMotor = calcPulsePause(mot1_Abs,mot2_Abs,mot3_Abs);		//Set timer Values (Global)
+	mostMotor = calcPulsePause(mot1_Abs,mot2_Abs,mot3_Abs, Ramp_Disabled);		//Set timer Values (Global)
 	ftm0StopClk();
 
 #if RAMP_MODE_NSTEP
-	if (!Ramp_Disabled) {
+	if (Ramp_Disabled) {
 		FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = Ramp_M1_End_Rem_Ticks[0];
 		FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = Ramp_M2_End_Rem_Ticks[0];
 		FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = Ramp_M3_End_Rem_Ticks[0];
@@ -313,7 +312,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	FTM0->CONTROLS[2].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 	FTM0->CONTROLS[4].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 #if RAMP_MODE_NSTEP
-	if (!Ramp_Disabled) {
+	if (Ramp_Disabled) {
 	FTM0->CONTROLS[6].CnSC &= ~FTM_CnSC_CHF(1);		// Clear TOF interrupt flag
 	}
 #endif
@@ -321,7 +320,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps){
 	if(mot2_Abs!=0){FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 	if(mot3_Abs!=0){FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC |= FTM_CnSC_CHIE(1);}
 #if RAMP_MODE_NSTEP
-	if (!Ramp_Disabled) {
+	if (Ramp_Disabled) {
 	FTM0->CONTROLS[6].CnSC |= FTM_CnSC_CHIE(1); //Ramp Sequence incrementer
 	}
 #endif
