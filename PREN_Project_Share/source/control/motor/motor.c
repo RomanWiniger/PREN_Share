@@ -291,10 +291,6 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps, bool Ramp
 	} else {
 		Ramp_Step_Curr = RAMP_NSTEPS + 1;   // ISR springt sofort in Konstant-Pfad
 
-		Motor1_Pause = SLOW_PAUSE_MOD_TICK;
-		Motor2_Pause = SLOW_PAUSE_MOD_TICK;
-		Motor3_Pause = SLOW_PAUSE_MOD_TICK;
-
 		Ramp_M1_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] = 0;
 		Ramp_M2_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] = 0;
 		Ramp_M3_End_Rem_Ticks_OF_Curr[RAMP_NSTEPS] = 0;

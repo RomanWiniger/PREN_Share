@@ -73,8 +73,8 @@ extern bool Ramp_Disabled; //flag für rampenaktivierung
 // Motor
 
 //Set Overall Parameters
-#define MOTOR_PULSE_US			500		//Start Pulse to End Pulse
-#define MIN_STEP_DISTANCE_US	500		//End Pulse to Start Pulse
+#define MOTOR_PULSE_US			200		//Start Pulse to End Pulse
+#define MIN_STEP_DISTANCE_US	200		//End Pulse to Start Pulse
 #define SLOW_PAUSE_MOD_TICK   	1500	//pick und place geschwindigkeit
 #define RAMP_DISTANCE_FACTOR	10		//*PREMIUM RAMP* *End Pulse to Start Pulse BEGINN LINEAR RAMP (if(<= 1) -> deactivated)
 #define FIRST_PULSE_START_MOD	1	//Start first Pulse at this Modulo Value of the Channel
@@ -103,8 +103,8 @@ extern bool Ramp_Disabled; //flag für rampenaktivierung
 #endif
 
 #if RAMP_MODE_END
-	#define RAMP_END_PS1		1500  // Stage 1 Reduce Prescaler at Remaining Steps
-	#define RAMP_END_PS2		500  // Stage 2 Reduce Prescaler at Remaining Steps
+	#define RAMP_END_PS1		150  // Stage 1 Reduce Prescaler at Remaining Steps
+	#define RAMP_END_PS2		50  // Stage 2 Reduce Prescaler at Remaining Steps
 	#define RAMP_END_PS3		0  // Stage 3 Reduce Prescaler at Remaining Steps
 	#define RAMP_END_PS4		0  // Stage 4 Reduce Prescaler at Remaining Steps
 #endif

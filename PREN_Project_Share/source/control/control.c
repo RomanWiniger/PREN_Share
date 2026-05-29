@@ -163,7 +163,7 @@ void controlInit(){
 
 void newCommand(struct ReceivedCommand command)//therm.c calls this function if a new command was sent
 {
-	Ramp_Disabled = !command.RampOn;//rampe
+	Ramp_Disabled = command.RampOn;//rampe
 	if(Coil_before){
 		if(command.ActCoil){coil_ctrl(true);}
 		else(coil_ctrl(false));
