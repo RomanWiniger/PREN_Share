@@ -1,1 +1,7 @@
-../source/control/motor/calculation.c:41:9:calcPulsePause	448	static
+../source/control/motor/calculation.c:50:9:calcPulsePause	1480	static
+../source/control/motor/calculation.c:420:6:analyzeSegment	272	static
+../source/control/motor/calculation.c:533:6:calcEndPoint	72	static
+../source/control/motor/calculation.c:577:6:segmentEndState	80	static
+../source/control/motor/calculation.c:625:6:resolveOverflows	40	static
+../source/control/motor/calculation.c:647:13:overflowCounter_16bit	32	static
+../source/control/motor/calculation.c:671:8:scalePercent	40	static

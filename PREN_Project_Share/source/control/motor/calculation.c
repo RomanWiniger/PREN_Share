@@ -36,9 +36,18 @@ void resolveOverflows(	uint64_t rem64[RAMP_NSTEPS+1],uint64_t pulse64[RAMP_NSTEP
 void calcCheckPending(bool pend[RAMP_NSTEPS+1],uint16_t tickEnd[RAMP_NSTEPS]);
 #endif
 
+// ErrorCheck
+bool EndSte_Ck =false;
+uint64_t EndTck_Chk=0;
+uint64_t HiNumCk=0;
+uint64_t LoNumCk=0;
 
+bool *EndState_Check = &EndSte_Ck;
+uint64_t *EndTicks_Check= &EndTck_Chk;
+uint64_t *HighNumCheck= &HiNumCk;
+uint64_t *LowNumCheck= &LoNumCk;
 
-int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabled){
+int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabled, uint16_t Disabled_Speed_factor){
 	uint32_t mostMotor;
 	uint64_t totalTicks;
 	uint64_t totalTicksPauseM1;
@@ -53,9 +62,27 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 	uint64_t tmp_M1_Pause_init;		// Tick Value for the FIRST Pause
 	uint64_t tmp_M2_Pause_init;		// Tick Value for the FIRST Pause
 	uint64_t tmp_M3_Pause_init;		// Tick Value for the FIRST Pause
+	uint64_t tmp_M1_Pause_init_CNV;		// Tick Value for the FIRST Pause
+	uint64_t tmp_M2_Pause_init_CNV;		// Tick Value for the FIRST Pause
+	uint64_t tmp_M3_Pause_init_CNV;		// Tick Value for the FIRST Pause
 	uint32_t tmp_M1_OF_CNT=0;	// OverFlow Counter
 	uint32_t tmp_M2_OF_CNT=0; // OverFlow Counter
 	uint32_t tmp_M3_OF_CNT=0; // OverFlow Counter
+	uint64_t min_pause;
+	uint64_t min_pulse;
+
+	//////////////////////////////////////////////////////////////////
+	///  SET MINIMAL PULSE/PAUSE FOR DISABLED RAMP
+	//////////////////////////////////////////////////////////////////
+	if(Ramp_Disabled){
+		min_pause = MOTOR_MINPAUSE_MOD_TICK;
+		min_pulse = MOTOR_PULSE_MOD_TICK;
+	}else{
+		min_pause = MOTOR_MINPAUSE_MOD_TICK *Disabled_Speed_factor;
+		min_pulse = MOTOR_PULSE_MOD_TICK *Disabled_Speed_factor;
+	}
+
+
 
 	//////////////////////////////////////////////////////////////////
 	///  FIND MOTOR WITH MOST STEPS
@@ -63,28 +90,28 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		if (Mot1>=Mot2 && Mot1>=Mot3){
 			mostMotor=1;
 			#if RAMP_MODE_NSTEP
-	    		Motor1_Pause_Full = MOTOR_MINPAUSE_MOD_TICK;
+	    		Motor1_Pause_Full = min_pause;
 			#endif
-			tmp_M1_Pause = MOTOR_MINPAUSE_MOD_TICK;
-			totalTicks=((int64_t)tmp_M1_Pause +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot1;
+			tmp_M1_Pause = min_pause;
+			totalTicks=((int64_t)tmp_M1_Pause +(int64_t)min_pulse)* (int64_t)Mot1;
 
 		}else{
 			if (Mot2>=Mot1 && Mot2>=Mot3){
 				mostMotor=2;
 				#if RAMP_MODE_NSTEP
-					Motor2_Pause_Full = MOTOR_MINPAUSE_MOD_TICK;
+					Motor2_Pause_Full = min_pause;
 				#endif
 
-				tmp_M2_Pause = MOTOR_MINPAUSE_MOD_TICK;
-				totalTicks=((int64_t)MOTOR_MINPAUSE_MOD_TICK +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot2;
+				tmp_M2_Pause = min_pause;
+				totalTicks=((int64_t)min_pause +(int64_t)min_pulse)* (int64_t)Mot2;
 			}else{
 				if (Mot3>=Mot2 && Mot3>=Mot1){
 						mostMotor=3;
 						#if RAMP_MODE_NSTEP
-							Motor3_Pause_Full = MOTOR_MINPAUSE_MOD_TICK;
+							Motor3_Pause_Full = min_pause;
 						#endif
-						tmp_M3_Pause = MOTOR_MINPAUSE_MOD_TICK;
-						totalTicks=((int64_t)MOTOR_MINPAUSE_MOD_TICK +(int64_t)MOTOR_PULSE_MOD_TICK)* (int64_t)Mot3;
+						tmp_M3_Pause = min_pause;
+						totalTicks=((int64_t)min_pause +(int64_t)min_pulse)* (int64_t)Mot3;
 				}else{
 					return false; // ERROR
 				}
@@ -96,12 +123,12 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		//////////////////////////////////////////////////////////////////
 
 		if (mostMotor != 1 && Mot1!=0){
-			totalTicksPauseM1 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot1);
+			totalTicksPauseM1 = totalTicks - (min_pulse*Mot1);
 			tmp_M1_Pause = totalTicksPauseM1 / Mot1;
 			#if RAMP_MODE_NSTEP
 				Motor1_Pause_Full=tmp_M1_Pause;
 			#endif
-			errorStepperM1 = totalTicks - ((tmp_M1_Pause +MOTOR_PULSE_MOD_TICK)*Mot1);
+			errorStepperM1 = totalTicks - ((tmp_M1_Pause +min_pulse)*Mot1);
 			if(errorStepperM1>0){
 				Motor1_Step_Corrector[0] = (Mot1/errorStepperM1)+1;				// Round up to omit overshoot
 				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
@@ -115,12 +142,12 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		if(Mot1==0){tmp_M1_Pause =0;}
 
 		if (mostMotor != 2 && Mot2!=0){
-			totalTicksPauseM2 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot2);
+			totalTicksPauseM2 = totalTicks - (min_pulse*Mot2);
 			tmp_M2_Pause = totalTicksPauseM2 / Mot2;
 			#if RAMP_MODE_NSTEP
 				Motor2_Pause_Full=tmp_M2_Pause;
 			#endif
-			errorStepperM2 = totalTicks - ((tmp_M2_Pause +MOTOR_PULSE_MOD_TICK)*Mot2);
+			errorStepperM2 = totalTicks - ((tmp_M2_Pause +min_pulse)*Mot2);
 			if(errorStepperM2>0){
 				Motor2_Step_Corrector[0] = (Mot2/errorStepperM2)+1;				// Round up to omit overshoot
 				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
@@ -134,12 +161,12 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		if(Mot2==0){tmp_M2_Pause =0;}
 
 		if (mostMotor != 3 && Mot3!=0){
-			totalTicksPauseM3 = totalTicks - (MOTOR_PULSE_MOD_TICK*Mot3);
+			totalTicksPauseM3 = totalTicks - (min_pulse*Mot3);
 			tmp_M3_Pause = totalTicksPauseM3 / Mot3;
 			#if RAMP_MODE_NSTEP
 				Motor3_Pause_Full=tmp_M3_Pause;
 			#endif
-			errorStepperM3 = totalTicks - ((tmp_M3_Pause +MOTOR_PULSE_MOD_TICK)*Mot3);
+			errorStepperM3 = totalTicks - ((tmp_M3_Pause +min_pulse)*Mot3);
 			if(errorStepperM3>0){
 				Motor3_Step_Corrector[0] = (Mot3/errorStepperM3)+1;				// Round up to omit overshoot
 				for(int i =0;i<(NUM_CORRECTOR_LOOPS-1);i++){
@@ -152,11 +179,12 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		}
 		if(Mot3==0){tmp_M3_Pause =0;}
 
-		if(Ramp_Disabled == true){
-		tmp_M1_Pause = tmp_M1_Pause*3;
-		tmp_M2_Pause = tmp_M2_Pause*3;
-		tmp_M3_Pause = tmp_M3_Pause*3;
-		}
+#if RAMP_MODE_NSTEP		// Preserve full uint64 Value for Init
+		tmp_M1_Pause_init = tmp_M1_Pause/2;
+		tmp_M2_Pause_init = tmp_M2_Pause/2;
+		tmp_M3_Pause_init = tmp_M3_Pause/2;
+#endif
+
 
 #if OVERFLOW_HANDLING
 		//////////////////////////////////////////////////////////////////
@@ -191,26 +219,26 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		//////////////////////////////////////////////////////////////////
 
 		if((tmp_M1_OF_CNT%2 == 0)||(tmp_M1_OF_CNT==0)){ 	// Even Overflow Counter
-			tmp_M1_Pause_init = tmp_M1_Pause/2;
+			tmp_M1_Pause_init_CNV = tmp_M1_Pause/2;
 		}else{						// Odd Overflow Counter
-			tmp_M1_Pause_init = (UINT16_MAX/2)+(tmp_M1_Pause/2);
+			tmp_M1_Pause_init_CNV = (UINT16_MAX/2)+(tmp_M1_Pause/2);
 		}
 
 		if((tmp_M2_OF_CNT%2 == 0)||(tmp_M2_OF_CNT==0)){ 	// Even Overflow Counter
-			tmp_M2_Pause_init = tmp_M2_Pause/2;
+			tmp_M2_Pause_init_CNV = tmp_M2_Pause/2;
 		}else{						// Odd Overflow Counter
-			tmp_M2_Pause_init = (UINT16_MAX/2)+(tmp_M2_Pause/2);
+			tmp_M2_Pause_init_CNV = (UINT16_MAX/2)+(tmp_M2_Pause/2);
 		}
 
 		if((tmp_M3_OF_CNT%2 == 0)||(tmp_M3_OF_CNT==0)){ 	// Even Overflow Counter
-			tmp_M3_Pause_init = tmp_M3_Pause/2;
+			tmp_M3_Pause_init_CNV = tmp_M3_Pause/2;
 		}else{						// Odd Overflow Counter
-			tmp_M3_Pause_init = (UINT16_MAX/2)+(tmp_M3_Pause/2);
+			tmp_M3_Pause_init_CNV = (UINT16_MAX/2)+(tmp_M3_Pause/2);
 		}
 
 
 #if RAMP_MODE_NSTEP
-		if(Ramp_Disabled == False){
+		if(Ramp_Disabled){
 		//////////////////////////////////////////////////////////////////
 		///  SET GLOBALS FOR RAMP (NSTEP)
 		//////////////////////////////////////////////////////////////////
@@ -259,7 +287,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		uint64_t tmp_m3_end_rem_ticks[RAMP_NSTEPS+1] = {0};
 
 		// Calc Ramp Factors
-		Ramp_Segment_factor[RAMP_NSTEPS]=1+scalePercent(1,RAMP_NSTEPS_STEP_PERC); // TODO:Immer gleiches Resultat: Temp Berechnen
+		Ramp_Segment_factor[RAMP_NSTEPS]=1+scalePercent(1,RAMP_NSTEPS_STEP_PERC);
 		for(int i = (RAMP_NSTEPS-1);i>=0;i--){
 			Ramp_Segment_factor[i]=Ramp_Segment_factor[i+1]+scalePercent(1,RAMP_NSTEPS_STEP_PERC);
 		}
@@ -285,7 +313,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		///  MOTOR 1
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M1_Start_State,tmp_M1_Pause_init,tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks,tmp_Ramp_Segment_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor1_Pause_Full);
+		analyzeSegment(Ramp_M1_Start_State,tmp_M1_Pause_init,tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks,tmp_Ramp_Segment_ticks, Ramp_Segment_factor,min_pulse,Motor1_Pause_Full);
 		resolveOverflows(tmp_m1_end_rem_ticks, tmp_m1_pulse_ticks,tmp_m1_pause_ticks,Ramp_M1_End_Rem_Ticks ,Ramp_M1_Pulse_Ticks,Ramp_M1_Pause_Ticks,Ramp_M1_End_Rem_Ticks_OF,Ramp_M1_Pulse_Ticks_OF,Ramp_M1_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M1_Rem_Pending,Ramp_M1_End_Rem_Ticks);
 
@@ -293,7 +321,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		///  MOTOR 2
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M2_Start_State,tmp_M2_Pause_init,tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks,tmp_Ramp_Segment_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor2_Pause_Full);
+		analyzeSegment(Ramp_M2_Start_State,tmp_M2_Pause_init,tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks,tmp_Ramp_Segment_ticks, Ramp_Segment_factor,min_pulse ,Motor2_Pause_Full);
 		resolveOverflows(tmp_m2_end_rem_ticks, tmp_m2_pulse_ticks,tmp_m2_pause_ticks,Ramp_M2_End_Rem_Ticks ,Ramp_M2_Pulse_Ticks,Ramp_M2_Pause_Ticks,Ramp_M2_End_Rem_Ticks_OF,Ramp_M2_Pulse_Ticks_OF,Ramp_M2_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M2_Rem_Pending,Ramp_M2_End_Rem_Ticks);
 
@@ -301,7 +329,7 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		///  MOTOR 3
 		//////////////////////////////////////////////////////////////////
 
-		analyzeSegment(Ramp_M3_Start_State,tmp_M3_Pause_init,tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks, tmp_Ramp_Segment_ticks, Ramp_Segment_factor,MOTOR_PULSE_MOD_TICK,Motor3_Pause_Full);
+		analyzeSegment(Ramp_M3_Start_State,tmp_M3_Pause_init,tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks, tmp_Ramp_Segment_ticks, Ramp_Segment_factor,min_pulse,Motor3_Pause_Full);
 		resolveOverflows(tmp_m3_end_rem_ticks, tmp_m3_pulse_ticks,tmp_m3_pause_ticks,Ramp_M3_End_Rem_Ticks ,Ramp_M3_Pulse_Ticks,Ramp_M3_Pause_Ticks,Ramp_M3_End_Rem_Ticks_OF,Ramp_M3_Pulse_Ticks_OF,Ramp_M3_Pause_Ticks_OF);
 		//calcCheckPending(Ramp_M3_Rem_Pending,Ramp_M3_End_Rem_Ticks);
 
@@ -327,18 +355,18 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 
 		// Set Initial Pause Value
 		if(Mot1 !=0){
-			if(mostMotor==1){FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M1_Pause_init);}
+			if(mostMotor==1){FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M1_Pause_init_CNV);}
 		}
 		if(Mot2 !=0){
-			if(mostMotor==2){FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M2_Pause_init);}
+			if(mostMotor==2){FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M2_Pause_init_CNV);}
 		}
 		if(Mot3!=0){
-			if(mostMotor==3){FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M3_Pause_init);}
+			if(mostMotor==3){FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = FIRST_PULSE_START_MOD;}else{FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV =FIRST_PULSE_START_MOD+(tmp_M3_Pause_init_CNV);}
 		}
 #endif
 
 #if RAMP_MODE_NSTEP
-		if(Ramp_Disabled == False){
+		if(Ramp_Disabled){
 		// Start at step 1 so the first CH6 firing uses Ramp_Step_Ticks[1] (large
 		// enough that CnV += N never overshoots CNT inside the ISR).
 		Ramp_Step_Curr = 1;
@@ -381,6 +409,10 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 		M2_Pause_Ramp = (uint16_t)tmp_M2_Pause;
 		M3_Pause_Ramp = (uint16_t)tmp_M3_Pause;
 
+		Current_Config.Minimal_Pause  = min_pause;
+		Current_Config.Minimal_Pulse  = min_pause;
+		Current_Config.RampIsDisabled = Ramp_Disabled;
+
 		return mostMotor;	// no Error
 }
 
@@ -411,20 +443,91 @@ void analyzeSegment(bool startState[RAMP_NSTEPS+1],uint64_t initTicks,uint64_t e
 
 	for(int i=1;i<=RAMP_NSTEPS;i++){
 		// (re)init Globals
-		EndState_Check=false;
-		EndTicks_Check=0;
-		HighNumCheck=0;
-		LowNumCheck=0;
+		*EndState_Check=false;
+		*EndTicks_Check=0;
+		*HighNumCheck=0;
+		*LowNumCheck=0;
+#if ROUNDING_ERROR_HANDLING
+#define VARIANTE_CLAUDE 1
+#if VARIANTE_CLAUDE
+		 for(int j = 0; j<10; j++){
+		        calcEndPoint(RAMP_NSTEPS_STEPS, startState[i], endTicks[i-1],
+		                     pulseTicks[i], pauseTicks[i],
+		                     EndState_Check, EndTicks_Check,
+		                     HighNumCheck, LowNumCheck);
 
-		calcEndPoint(RAMP_NSTEPS_STEPS,startState[i],endTicks[i-1],pulseTicks[i],pauseTicks[i],&EndState_Check, &EndTicks_Check,&HighNumCheck,&LowNumCheck);
-		if ((EndState_Check != startState[i+1])||(HighNumCheck!=highNumber[i])||(LowNumCheck!=lowNumber[i])){
-			// TODO: What to do when no Matching
-			int iasd = 0;
+		        // Welche Länge hat das aktuelle Start-Element?
+		        // startState[i]==true  -> endTicks[i-1] ist ein Rest eines HIGH (Puls)
+		        // startState[i]==false -> endTicks[i-1] ist ein Rest eines LOW  (Pause)
+		        uint64_t startElemTicks = startState[i] ? pulseTicks[i] : pauseTicks[i];
+		        uint64_t otherElemTicks = startState[i] ? pauseTicks[i] : pulseTicks[i];
+
+		        if(*EndState_Check != startState[i+1]){
+		            // Endzustand falsch: Segment endet in falscher Phase.
+		            // Eine halbe Periode (startElem + otherElem) verschieben
+		            // und Richtung anhand HighNum-Abweichung bestimmen.
+		            if(*HighNumCheck > highNumber[i]){
+		                // Zu viele Pulse: Offset nach vorne schieben (ein otherElem überspringen)
+		                endTicks[i-1] += otherElemTicks;
+		            } else {
+		                // Zu wenige Pulse: Offset zurück (ein otherElem weniger)
+		                if(endTicks[i-1] >= otherElemTicks){
+		                    endTicks[i-1] -= otherElemTicks;
+		                } else {
+		                    endTicks[i-1] = 0;
+		                }
+		            }
+
+		        } else if((*HighNumCheck != highNumber[i]) || (*LowNumCheck != lowNumber[i])){
+		            // Endzustand stimmt, aber Anzahl Pulse/Pausen weicht ab.
+		            int64_t highDiff = (int64_t)*HighNumCheck - (int64_t)highNumber[i];
+		            int64_t lowDiff  = (int64_t)*LowNumCheck  - (int64_t)lowNumber[i];
+
+		            // Korrektur mit der jeweils richtigen Tick-Länge:
+		            // highDiff -> korrigiere mit pulseTicks (HIGH-Elemente)
+		            // lowDiff  -> korrigiere mit pauseTicks (LOW-Elemente)
+		            if(highDiff != 0){
+		                if(highDiff > 0){
+		                    endTicks[i-1] += (uint64_t)highDiff * pulseTicks[i];
+		                } else {
+		                    uint64_t correction = (uint64_t)(-highDiff) * pulseTicks[i];
+		                    endTicks[i-1] = (endTicks[i-1] >= correction) ? endTicks[i-1] - correction : 0;
+		                }
+		            } else if(lowDiff != 0){
+		                if(lowDiff > 0){
+		                    endTicks[i-1] += (uint64_t)lowDiff * pauseTicks[i];
+		                } else {
+		                    uint64_t correction = (uint64_t)(-lowDiff) * pauseTicks[i];
+		                    endTicks[i-1] = (endTicks[i-1] >= correction) ? endTicks[i-1] - correction : 0;
+		                }
+		            }
+
+		        } else {
+		            break; // Korrekt
+		        }
+
+		        // Sicherheit: endTicks[i-1] darf nicht groesser als ein voller Zyklus sein
+		        uint64_t fullCycle = pulseTicks[i] + pauseTicks[i];
+		        if(endTicks[i-1] >= fullCycle){
+		            endTicks[i-1] %= fullCycle;
+		        }
+		    }
+#else
+		for(int j = 0;j<10;j++){
+			calcEndPoint(RAMP_NSTEPS_STEPS,startState[i],endTicks[i-1],pulseTicks[i],pauseTicks[i],EndState_Check, EndTicks_Check,HighNumCheck,LowNumCheck);
+			if (*EndState_Check != startState[i+1]){
+				// Todo
+			}else if((*HighNumCheck!=highNumber[i])||(*LowNumCheck!=lowNumber[i])){
+				// Todo
+			}else{
+				break;}
 		}
+#endif // VARIANTE_CLAUDE
+#endif //ROUNDING_ERROR_HANDLING
 	}
 }
 
-#endif
+#endif // RAMP_MODE_NSTEP
 
 #if RAMP_MODE_NSTEP
 void calcEndPoint(	int64_t total_ticks,

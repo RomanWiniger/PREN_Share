@@ -260,13 +260,13 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			}
 			else{
 				MOTOR1_STEP_GPIO_HIGH();
-				FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
+				FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV  += Current_Config.Minimal_Pulse;	// Set Distance to next Pulse
 				Motor1_Step_Curr +=1;
 				Motor1_Step_OF_Curr = Motor1_Step_OF;			// Restart Overflow counter
 			}
 #else
 			MOTOR1_STEP_GPIO_HIGH();
-			FTM0->CONTROLS[1].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to end Pulse
+			FTM0->CONTROLS[1].CnV  += Current_Config.Minimal_Pulse;					// Set Distance to end Pulse
 			Motor1_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
@@ -356,69 +356,19 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			}
 		}else{				 // Output was low before: Start Pulse
 #if OVERFLOW_HANDLING
-	#if	(!(RAMP_MODE_TWOSTEP || RAMP_MODE_PREMIUM))
 			if(Motor2_Step_OF_Curr>0){
 				// Leave ChV with the current value
 				Motor2_Step_OF_Curr--;
 			}
 			else{
 				MOTOR2_STEP_GPIO_HIGH();
-				FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
+				FTM0->CONTROLS[2].CnV  += Current_Config.Minimal_Pulse;	// Set Distance to next Pulse
 				Motor2_Step_Curr +=1;
 				Motor2_Step_OF_Curr = Motor2_Step_OF;			// Restart Overflow counter
 			}
-	#elif	RAMP_MODE_TWOSTEP
-			if(Ramp_twostep){
-				if(M2_Step_Ramp_OF_Curr>0){
-					// Leave ChV with the current value
-					M2_Step_Ramp_OF_Curr--;
-				}
-				else{
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor2_Step_Curr +=1;
-					M2_Step_Ramp_OF_Curr = M2_Step_Ramp_OF;			// Restart Overflow counter
-				}
-			}else{
-				if(Motor2_Step_OF_Curr>0){
-					// Leave ChV with the current value
-					Motor2_Step_OF_Curr--;
-				}else{
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor2_Step_Curr +=1;
-					Motor2_Step_OF_Curr = Motor2_Step_OF;			// Restart Overflow counter
-				}
-			}
-	#elif	RAMP_MODE_PREMIUM
-			if(Ramping_Premium){
-				if(M2_Step_Ramp_OF_Curr>0){
-					// Leave ChV with the current value
-					M2_Step_Ramp_OF_Curr--;
-				}
-				else{
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor2_Step_Curr +=1;
-					M2_Step_Ramp_OF_Curr = M2_Step_Ramp_OF;			// Restart Overflow counter
-				}
-			}else{
-				if(Motor2_Step_OF_Curr>0){
-					// Leave ChV with the current value
-					Motor2_Step_OF_Curr--;
-				}else{
-					MOTOR2_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor2_Step_Curr +=1;
-					Motor2_Step_OF_Curr = Motor2_Step_OF;			// Restart Overflow counter
-				}
-			}
-	#endif
-
-
 #else
 			MOTOR2_STEP_GPIO_HIGH();
-			FTM0->CONTROLS[2].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to next Pulse
+			FTM0->CONTROLS[2].CnV  += Current_Config.Minimal_Pulse;					// Set Distance to next Pulse
 			Motor2_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
@@ -508,69 +458,20 @@ if(Ramp_Step_Curr<=RAMP_NSTEPS){	// if true: Process Ramp
 			}
 		}else{				 // Output was low before: Start Pulse
 #if OVERFLOW_HANDLING
-	#if	(!(RAMP_MODE_TWOSTEP || RAMP_MODE_PREMIUM))
 			if(Motor3_Step_OF_Curr>0){
 				// Leave ChV with the current value
 				Motor3_Step_OF_Curr--;
 			}
 			else{
 				MOTOR3_STEP_GPIO_HIGH();
-				FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
+				FTM0->CONTROLS[4].CnV  += Current_Config.Minimal_Pulse;	// Set Distance to next Pulse
 				Motor3_Step_Curr +=1;
 				Motor3_Step_OF_Curr = Motor3_Step_OF;			// Restart Overflow counter
 			}
-	#elif	RAMP_MODE_TWOSTEP
-			if(Ramp_twostep){
-				if(M3_Step_Ramp_OF_Curr>0){
-					// Leave ChV with the current value
-					M3_Step_Ramp_OF_Curr--;
-				}
-				else{
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor3_Step_Curr +=1;
-					M3_Step_Ramp_OF_Curr = M3_Step_Ramp_OF;			// Restart Overflow counter
-				}
-			}else{
-				if(Motor3_Step_OF_Curr>0){
-					// Leave ChV with the current value
-					Motor3_Step_OF_Curr--;
-				}else{
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor3_Step_Curr +=1;
-					Motor3_Step_OF_Curr = Motor3_Step_OF;			// Restart Overflow counter
-				}
-			}
-	#elif	RAMP_MODE_PREMIUM
-			if(Ramping_Premium){
-				if(M3_Step_Ramp_OF_Curr>0){
-					// Leave ChV with the current value
-					M3_Step_Ramp_OF_Curr--;
-				}
-				else{
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor3_Step_Curr +=1;
-					M3_Step_Ramp_OF_Curr = M3_Step_Ramp_OF;			// Restart Overflow counter
-				}
-			}else{
-				if(Motor3_Step_OF_Curr>0){
-					// Leave ChV with the current value
-					Motor3_Step_OF_Curr--;
-				}else{
-					MOTOR3_STEP_GPIO_HIGH();
-					FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;	// Set Distance to next Pulse
-					Motor3_Step_Curr +=1;
-					Motor3_Step_OF_Curr = Motor3_Step_OF;			// Restart Overflow counter
-				}
-			}
-	#endif
-
 
 #else
 			MOTOR3_STEP_GPIO_HIGH();
-			FTM0->CONTROLS[4].CnV  += MOTOR_PULSE_MOD_TICK;					// Set Distance to next Pulse
+			FTM0->CONTROLS[4].CnV  += Current_Config.Minimal_Pulse;					// Set Distance to next Pulse
 			Motor3_Step_Curr +=1;									// Increment Pulse-Counter (Beginning of Pulse)
 #endif
 		}
@@ -605,13 +506,13 @@ void FTM0CH5_IRQHandler(void){
             MotorRot_Step_OF_Curr--;
         }else{
             MOTORROT_STEP_GPIO_HIGH();
-            FTM0->CONTROLS[5].CnV += MOTOR_PULSE_MOD_TICK;
+            FTM0->CONTROLS[5].CnV += Current_Config.Minimal_Pulse;
             MotorRot_Step_Curr += 1;
             MotorRot_Step_OF_Curr = MotorRot_Step_OF;
         }
 #else
         MOTORROT_STEP_GPIO_HIGH();
-        FTM0->CONTROLS[5].CnV += MOTOR_PULSE_MOD_TICK;
+        FTM0->CONTROLS[5].CnV += Current_Config.Minimal_Pulse;
         MotorRot_Step_Curr += 1;
 #endif
     }

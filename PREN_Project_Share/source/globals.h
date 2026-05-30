@@ -9,8 +9,8 @@
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
 #define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
-#define SIM_SENSORS			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
-#define ISR_MONITOR			0	// Disable MoveToInitPosin motorinit, when no sensor is attached
+#define SIM_SENSORS			0 	// Disable MoveToInitPosin motorinit, when no sensor is attached
+#define ISR_MONITOR			0	//
 #if DEBUG_MODE
 #define DEBUG_MODE_SEQ		1	// Debug Channel 6 Sequence Incrementer
 #define DEBUG_MODE_ISR1		1	// Debug Channel 1 Sequence Motor1
@@ -73,22 +73,25 @@ extern bool Ramp_Disabled; //flag für rampenaktivierung
 // Motor
 
 //Set Overall Parameters
-#define MOTOR_PULSE_US			400		//Start Pulse to End Pulse
-#define MIN_STEP_DISTANCE_US	400		//End Pulse to Start Pulse
-#define SLOW_PAUSE_MOD_TICK   	1500	//pick und place geschwindigkeit
-#define RAMP_DISTANCE_FACTOR	10		//*PREMIUM RAMP* *End Pulse to Start Pulse BEGINN LINEAR RAMP (if(<= 1) -> deactivated)
-#define FIRST_PULSE_START_MOD	1	//Start first Pulse at this Modulo Value of the Channel
+
+#define MOTOR_PULSE_US			(200)		//Start Pulse to End Pulse
+#define MIN_STEP_DISTANCE_US	(200)		//End Pulse to Start Pulse
+#define SLOW_MODE_FACTOR	   	(4)		//pick und place geschwindigkeit (Faktor auf die geschwindigkeit als uint16_t)
+#define RAMP_DISTANCE_FACTOR	(10)		//*PREMIUM RAMP* *End Pulse to Start Pulse BEGINN LINEAR RAMP (if(<= 1) -> deactivated)
+#define FIRST_PULSE_START_MOD	(1)	//Start first Pulse at this Modulo Value of the Channel
+
 
 #define TIME_PER_MOD_TICK_US	((double)1/(double)TIMER_CLK_SCAL_MHZ)
 #define MOTOR_PULSE_MOD_TICK	((int16_t)(MOTOR_PULSE_US/TIME_PER_MOD_TICK_US))
 #define MOTOR_MINPAUSE_MOD_TICK	((int16_t)((MIN_STEP_DISTANCE_US)/TIME_PER_MOD_TICK_US))
 
-#define NUM_CORRECTOR_LOOPS		10	// Rounding Error Correction
+#define NUM_CORRECTOR_LOOPS		(10)	// Rounding Error Correction
 
 //////////////////////////////////////////////////////
 // RAMP ACTIVATION
 //////////////////////////////////////////////////////
-#define RAMP_MODE_NSTEP		0 		// N Spedmodes: Startup and Run
+
+#define RAMP_MODE_NSTEP		1 		// N Spedmodes: Startup and Run
 #define RAMP_MODE_END		0
 
 
@@ -100,6 +103,7 @@ extern bool Ramp_Disabled; //flag für rampenaktivierung
 	#define RAMP_NSTEPS_STEPS		20000	// NSTEP MODE: Number of Ticks to be ramped (per STEP)	@Pascal: Anzahl Ticks pro Schritt
 	#define RAMP_NSTEPS_STEP_PERC	100		// NSTEP MODE: Inrease Time per Step [%]				@Pascal: Prozentuale Verlängerung des Schitts zum vorherigen
 	#define RAMP_NSTEPS_FIRST_MOD	1000	// Ticks to set first bevore starting Modulo timer
+	#define ROUNDING_ERROR_HANDLING	0		// new Todo
 #endif
 
 #if RAMP_MODE_END
@@ -148,6 +152,14 @@ extern uint16_t M1_Pause_Ramp;
 extern uint16_t M2_Pause_Ramp;
 extern uint16_t M3_Pause_Ramp;
 extern double Ramp_Factor_current;
+
+typedef struct{
+	uint16_t Minimal_Pause;
+	uint16_t Minimal_Pulse;
+	bool RampIsDisabled;
+}current_config_t;
+
+extern current_config_t Current_Config;
 
 extern uint16_t MotorRot_Pause; 		//1950 = 1s
 extern int32_t Motor1_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tick to Stepp
@@ -203,11 +215,6 @@ extern int32_t Motor3_Step_Corrector[]; 	// if Current Step mod = 0: Add one Tic
 	extern uint16_t Ramp_M3_Pulse_Ticks_OF[RAMP_NSTEPS+1];
 	extern uint16_t Ramp_M3_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1];
 
-	// ErrorCheck
-	extern bool EndState_Check;
-	extern uint64_t EndTicks_Check;
-	extern uint64_t HighNumCheck;
-	extern uint64_t LowNumCheck;
 #endif
 
 #if DEBUG
