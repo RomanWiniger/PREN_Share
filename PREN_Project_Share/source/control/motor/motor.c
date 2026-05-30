@@ -279,7 +279,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps, bool Ramp
 	///  SET TIMER VALUES
 	//////////////////////////////////////////////////////////////////
 
-	mostMotor = calcPulsePause(mot1_Abs,mot2_Abs,mot3_Abs, Ramp_Disabled);		//Set timer Values (Global)
+	mostMotor = calcPulsePause(mot1_Abs,mot2_Abs,mot3_Abs, Ramp_Disabled, SLOW_MODE_FACTOR);		//Set timer Values (Global)
 	ftm0StopClk();
 
 #if RAMP_MODE_NSTEP

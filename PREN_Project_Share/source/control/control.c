@@ -40,6 +40,12 @@ uint16_t M1_Pause_Ramp=0;
 uint16_t M2_Pause_Ramp=0;
 uint16_t M3_Pause_Ramp=0;
 uint16_t Coil_before = 0;
+
+current_config_t Current_Config = {0, 0, false};
+
+//////////////////////////////////////////////////////
+// Initialize Internal Variables
+//////////////////////////////////////////////////////
 bool Ramp_Disabled = false; //ramp disabled
 double Ramp_Factor_current =1;
 
@@ -120,11 +126,6 @@ double Ramp_Factor_current =1;
 	uint16_t Ramp_M3_Pulse_Ticks_OF[RAMP_NSTEPS+1]={0};
 	uint16_t Ramp_M3_Pulse_Ticks_OF_Curr[RAMP_NSTEPS+1]={0};
 
-	// ErrorCheck
-	bool EndState_Check=false;
-	uint64_t EndTicks_Check=0;
-	uint64_t HighNumCheck=0;
-	uint64_t LowNumCheck=0;
 #endif
 
 #if DEBUG
