@@ -13,7 +13,8 @@ source/main.o source/main.d: ../source/main.c ../source/platform.h \
  ../source/globals.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\coil/coil.h \
  C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\motor/motor.h \
- C:\Users\roman\myGitRepo\PREN_Project_Share\source\utils/wait.h
+ C:\Users\roman\myGitRepo\PREN_Project_Share\source\utils/wait.h \
+ C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\motor/motor_config.h
 ../source/platform.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\device/MK22F51212.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\CMSIS/core_cm4.h:
@@ -30,3 +31,4 @@ C:\Users\roman\myGitRepo\PREN_Project_Share\source\control/control.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\coil/coil.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\motor/motor.h:
 C:\Users\roman\myGitRepo\PREN_Project_Share\source\utils/wait.h:
+C:\Users\roman\myGitRepo\PREN_Project_Share\source\control\motor/motor_config.h:
