@@ -4929,7 +4929,7 @@ LOAD linker stubs
  .debug_macro   0x00010679       0x1b ./board/peripherals.o
  .debug_macro   0x00010694       0x1b ./board/pin_mux.o
 
-.debug_line     0x00000000     0xf03c
+.debug_line     0x00000000     0xf03e
  .debug_line    0x00000000      0x8dd ./startup/startup_mk22f51212.o
  .debug_line    0x000008dd      0x714 ./startup/system.o
  .debug_line    0x00000ff1      0x3d1 ./source/utils/debug.o
@@ -4937,34 +4937,34 @@ LOAD linker stubs
  .debug_line    0x00002392      0x9a3 ./source/utils/util.o
  .debug_line    0x00002d35      0x668 ./source/utils/wait.o
  .debug_line    0x0000339d      0x445 ./source/control/sensor/sensor.o
- .debug_line    0x000037e2      0xc8b ./source/control/motor/calculation.o
- .debug_line    0x0000446d      0x3f9 ./source/control/motor/emergency.o
- .debug_line    0x00004866      0xb5b ./source/control/motor/motor.o
- .debug_line    0x000053c1      0x46b ./source/control/coil/coil.o
- .debug_line    0x0000582c      0x697 ./source/control/control.o
- .debug_line    0x00005ec3      0x9a1 ./source/com/term.o
- .debug_line    0x00006864      0x718 ./source/com/uart2.o
- .debug_line    0x00006f7c      0x69f ./source/main.o
- .debug_line    0x0000761b     0x1833 ./drivers/fsl_clock.o
- .debug_line    0x00008e4e     0x1ada ./drivers/fsl_dspi.o
- .debug_line    0x0000a928     0x1622 ./drivers/fsl_i2c.o
- .debug_line    0x0000bf4a      0x85e ./drivers/fsl_smc.o
- .debug_line    0x0000c7a8     0x1602 ./drivers/fsl_uart.o
- .debug_line    0x0000ddaa      0x517 ./device/system_MK22F51212.o
- .debug_line    0x0000e2c1      0x67d ./board/clock_config.o
- .debug_line    0x0000e93e       0x5c ./board/peripherals.o
- .debug_line    0x0000e99a       0x54 ./board/pin_mux.o
- .debug_line    0x0000e9ee      0x1c9 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(_cr_sbrk.o)
- .debug_line    0x0000ebb7       0x44 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(_exit.o)
- .debug_line    0x0000ebfb       0x50 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(close.o)
- .debug_line    0x0000ec4b      0x1ae C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(fstat.o)
- .debug_line    0x0000edf9       0x50 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(getpid.o)
- .debug_line    0x0000ee49       0x51 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(isatty.o)
- .debug_line    0x0000ee9a       0x4f C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(kill.o)
- .debug_line    0x0000eee9       0x51 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(lseek.o)
- .debug_line    0x0000ef3a       0x50 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(read.o)
- .debug_line    0x0000ef8a       0x51 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(write.o)
- .debug_line    0x0000efdb       0x61 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(_cr_check_heap.o)
+ .debug_line    0x000037e2      0xc8d ./source/control/motor/calculation.o
+ .debug_line    0x0000446f      0x3f9 ./source/control/motor/emergency.o
+ .debug_line    0x00004868      0xb5b ./source/control/motor/motor.o
+ .debug_line    0x000053c3      0x46b ./source/control/coil/coil.o
+ .debug_line    0x0000582e      0x697 ./source/control/control.o
+ .debug_line    0x00005ec5      0x9a1 ./source/com/term.o
+ .debug_line    0x00006866      0x718 ./source/com/uart2.o
+ .debug_line    0x00006f7e      0x69f ./source/main.o
+ .debug_line    0x0000761d     0x1833 ./drivers/fsl_clock.o
+ .debug_line    0x00008e50     0x1ada ./drivers/fsl_dspi.o
+ .debug_line    0x0000a92a     0x1622 ./drivers/fsl_i2c.o
+ .debug_line    0x0000bf4c      0x85e ./drivers/fsl_smc.o
+ .debug_line    0x0000c7aa     0x1602 ./drivers/fsl_uart.o
+ .debug_line    0x0000ddac      0x517 ./device/system_MK22F51212.o
+ .debug_line    0x0000e2c3      0x67d ./board/clock_config.o
+ .debug_line    0x0000e940       0x5c ./board/peripherals.o
+ .debug_line    0x0000e99c       0x54 ./board/pin_mux.o
+ .debug_line    0x0000e9f0      0x1c9 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(_cr_sbrk.o)
+ .debug_line    0x0000ebb9       0x44 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(_exit.o)
+ .debug_line    0x0000ebfd       0x50 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(close.o)
+ .debug_line    0x0000ec4d      0x1ae C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(fstat.o)
+ .debug_line    0x0000edfb       0x50 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(getpid.o)
+ .debug_line    0x0000ee4b       0x51 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(isatty.o)
+ .debug_line    0x0000ee9c       0x4f C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(kill.o)
+ .debug_line    0x0000eeeb       0x51 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(lseek.o)
+ .debug_line    0x0000ef3c       0x50 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(read.o)
+ .debug_line    0x0000ef8c       0x51 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(write.o)
+ .debug_line    0x0000efdd       0x61 C:/nxp/MCUXpressoIDE_25.6.136/ide/plugins/com.nxp.mcuxpresso.tools.win32_25.6.0.202501151204/tools/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7e-m+fp/hard\libcr_newlib_nohost.a(_cr_check_heap.o)
 
 .debug_str      0x00000000    0x64592
  .debug_str     0x00000000    0x64592 ./startup/startup_mk22f51212.o

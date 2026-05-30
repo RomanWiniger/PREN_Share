@@ -74,12 +74,14 @@ int32_t calcPulsePause(int32_t Mot1,int32_t Mot2, int32_t Mot3, bool Ramp_Disabl
 	//////////////////////////////////////////////////////////////////
 	///  SET MINIMAL PULSE/PAUSE FOR DISABLED RAMP
 	//////////////////////////////////////////////////////////////////
+
 	if(Ramp_Disabled){
 		min_pause = MOTOR_MINPAUSE_MOD_TICK;
 		min_pulse = MOTOR_PULSE_MOD_TICK;
 	}else{
 		min_pause = MOTOR_MINPAUSE_MOD_TICK *Disabled_Speed_factor;
 		min_pulse = MOTOR_PULSE_MOD_TICK *Disabled_Speed_factor;
+
 	}
 
 

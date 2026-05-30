@@ -40,6 +40,10 @@ uint16_t M1_Pause_Ramp=0;
 uint16_t M2_Pause_Ramp=0;
 uint16_t M3_Pause_Ramp=0;
 uint16_t Coil_before = 0;
+
+//////////////////////////////////////////////////////
+// Initialize Internal Variables
+//////////////////////////////////////////////////////
 bool Ramp_Disabled = false; //ramp disabled
 
 current_config_t Current_Config = {0, 0, false};
