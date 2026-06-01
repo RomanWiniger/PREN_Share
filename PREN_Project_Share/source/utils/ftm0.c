@@ -80,7 +80,7 @@ void ftm0Init(bool mod_max, uint32_t modulo)
 {
   // set clockgating for FTM0
   SIM->SCGC6 |= SIM_SCGC6_FTM0(1);
-  FTM0->CNTIN=10;
+  FTM0->CNTIN=0;
   if(mod_max){  FTM0->MOD = 0xFFFF;}else{FTM0->MOD =modulo;}
 
 }
@@ -105,19 +105,29 @@ void ftm0ReducePS(int CLK_Source, int Prescaler)
 	// If cnv <= val the compare already fired but the ISR is still pending:
 	// set CnV=1 so the motor fires immediately after restart instead of ~65535 ticks later.
 	uint16_t cnv;
-	cnv = FTM0->CONTROLS[1].CnV;
+	cnv = FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV;
 	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnV = (cnv > val) ? (cnv - val) : 1u;
 	FTM0->CONTROLS[MOTOR1_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHF(1);
 
-	cnv = FTM0->CONTROLS[2].CnV;
+	for (int i=0;i<10;i++){		// DO NOT DELETE: Fixing of omited Interrupts in END-RAMP
+		__NOP();
+	}
+
+	cnv = FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV;
 	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnV = (cnv > val) ? (cnv - val) : 1u;
 	FTM0->CONTROLS[MOTOR2_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHF(1);
 
-	cnv = FTM0->CONTROLS[4].CnV;
+	for (int i=0;i<10;i++){		// DO NOT DELETE: Fixing of omited Interrupts in END-RAMP
+		__NOP();
+	}
+
+	cnv = FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV;
 	FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnV = (cnv > val) ? (cnv - val) : 1u;
 	FTM0->CONTROLS[MOTOR3_STEP_TIMER_CHNL].CnSC &= ~FTM_CnSC_CHF(1);
 
-
+	for (int i=0;i<20;i++){		// DO NOT DELETE: Fixing of omited Interrupts in END-RAMP
+		__NOP();
+	}
 
 	FTM0->CNT = 0;
 	FTM0->SC = FTM_SC_CLKS(CLK_Source) | FTM_SC_PS(Prescaler);

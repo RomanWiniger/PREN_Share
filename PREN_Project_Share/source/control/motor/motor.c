@@ -351,15 +351,15 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps, bool Ramp
 	//////////////////////////////////////////////////////////////////
 	///  START TIMERS
 	//////////////////////////////////////////////////////////////////
+#if DEBUG_MODE_FTM_ST
 	RES2_GPIO_HIGH(); // Monitoring
-
+#endif
 	ftm0EnableIRQ();
 	ftm0StartClk((CLK_SRC_GLOBAL),PS_GLOBAL);
 
-
+#if DEBUG_MODE_FTM_ST
 	RES2_GPIO_LOW(); // Monitoring ISR-Time
-
-
+#endif
 
 	//////////////////////////////////////////////////////////////////
 	///  CHECK STEPS (
@@ -373,7 +373,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps, bool Ramp
 	while (true){
 
 	#if RAMP_MODE_END
-//		if (ramp_mode < 4){
+		if(Ramp_Disabled){
 			if(mostMotor ==1){rem_steps = mot1_Abs-Motor1_Step_Curr;}
 			if(mostMotor ==2){rem_steps = mot2_Abs-Motor2_Step_Curr;}
 			if(mostMotor ==3){rem_steps = mot3_Abs-Motor3_Step_Curr;}
@@ -391,7 +391,7 @@ int moveWay(int32_t mot1, int32_t mot2,int32_t mot3, int32_t RotSteps, bool Ramp
 				ftm0ReducePS(CLK_SRC_GLOBAL,(PS_GLOBAL+4));
 				reduce[3] = false;
 			}
-//		}
+		}
 	#endif
 
 		if((Motor1_Step_Curr>=mot1_Abs)&&(Motor2_Step_Curr>=mot2_Abs)&&(Motor3_Step_Curr>=mot3_Abs)&&(MotorRot_Step_Curr >= rot_Abs)){
@@ -468,6 +468,8 @@ void initGlobalsMove(void){
 	for (int i = 0; i < NUM_CORRECTOR_LOOPS; i++) { //
 	    Motor3_Step_Corrector[i] = 0;
 	}
+
+
 }
 
 void initGlobalsRot(void){

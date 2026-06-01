@@ -4,15 +4,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DEBUG_MODE			0
+#define DEBUG_MODE			1
 #define TEST_SEQUENCE		(0 && DEBUG_MODE) // Nur aktiv im DEBUG_MODE
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
 #define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
-#define SIM_SENSORS			0 	// Disable MoveToInitPosin motorinit, when no sensor is attached
+#define SIM_SENSORS			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #define ISR_MONITOR			0	//
 #if DEBUG_MODE
 #define DEBUG_MODE_SEQ		1	// Debug Channel 6 Sequence Incrementer
+#define DEBUG_MODE_FTM_ST	1	// Debug Channel 4 Sequence Motor3
 #define DEBUG_MODE_ISR1		1	// Debug Channel 1 Sequence Motor1
 #define DEBUG_MODE_ISR2		1	// Debug Channel 2 Sequence Motor2
 #define DEBUG_MODE_ISR3		1	// Debug Channel 4 Sequence Motor3
@@ -91,7 +92,7 @@ extern bool Ramp_Disabled; //flag für rampenaktivierung
 //////////////////////////////////////////////////////
 
 #define RAMP_MODE_NSTEP		1 		// N Spedmodes: Startup and Run
-#define RAMP_MODE_END		0
+#define RAMP_MODE_END		1
 
 
 //////////////////////////////////////////////////////
