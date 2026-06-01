@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DEBUG_MODE			1
+#define DEBUG_MODE			0
 #define TEST_SEQUENCE		(0 && DEBUG_MODE) // Nur aktiv im DEBUG_MODE
 #define COMMAND_BYTE		0	// @PASCAL: Zu testen -> Anpassung im Raspy-Program notwendig?
 #define SENSOR_TEST			0	// @PASCAL: Zu testen -> siehe main.c
 #define INIT_POS_TEST		0	// @PASCAL: Zu testen -> siehe main.c
-#define SIM_SENSORS			1 	// Disable MoveToInitPosin motorinit, when no sensor is attached
+#define SIM_SENSORS			0 	// Disable MoveToInitPosin motorinit, when no sensor is attached
 #define ISR_MONITOR			0	//
 #if DEBUG_MODE
 #define DEBUG_MODE_SEQ		1	// Debug Channel 6 Sequence Incrementer
