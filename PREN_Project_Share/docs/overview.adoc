@@ -4,11 +4,13 @@ Dieses Projekt implementiert die eingebettete Firmware für einen *Delta-Roboter
 
 Die Firmware läuft auf einem *NXP Kinetis K22 (MK22F51212)* Mikrocontroller und ist verantwortlich für:
 
-* Empfang von Bewegungsbefehlen von einem Raspberry Pi über UART
-* Ansteuerung von drei linearen Schrittmotoren (Delta-Achsen)
-* Steuerung eines Rotationsmotors am Endeffektor
-* Aktivierung eines Elektromagneten (Spule) zur Objektmanipulation
-* Auslesen von Endschalter-Sensoren für die Referenzfahrt
+* Empfang von Bewegungsbefehlen von einem Raspberry Pi über UART2 (strukturiertes Binärprotokoll)
+* Ansteuerung von drei linearen Schrittmotoren (Delta-Achsen) mit präziser, synchronisierter Impulserzeugung
+* Optionale Beschleunigungsrampe (NSTEP-Profil, 10 Stufen) beim Anfahren und Bremsen
+* Steuerung eines Rotationsmotors am Endeffektor (Greifer-Rotation)
+* Aktivierung eines Elektromagneten (Spule) zur Objektmanipulation (Pick & Place)
+* Auslesen von Endschalter-Sensoren für die Referenzfahrt (Homing)
+* Hardware-seitige Notabschaltung aller Motoren über FTM0-Kanal 7 (Emergency Stop)
 
 === Team
 
@@ -19,3 +21,44 @@ Die Firmware läuft auf einem *NXP Kinetis K22 (MK22F51212)* Mikrocontroller und
 | Pascal Hofstetter | Firmware-Entwicklung
 | Roman Winiger | Firmware-Entwicklung
 |===
+
+=== Softwarestand
+
+[cols="2,3"]
+|===
+| Eigenschaft | Wert
+
+| Letzter Commit | `5ba47ef` — EndRamp Testing
+| Datum | 2026-06-02
+| Branch | `main`
+| Aktive Rampenmodi | `RAMP_MODE_NSTEP`, `RAMP_MODE_END`
+| Rampen-Schritte | 10 Stufen, je 20000 Ticks, +100 % pro Stufe
+|===
+
+=== Systemübersicht
+
+Die folgende Abbildung zeigt den Datenfluss auf hoher Ebene:
+
+[source]
+----
+Raspberry Pi
+    │  UART2 (115200 Baud)
+    ▼
+term.c  ──────── Befehls-Parser / Dispatcher
+    │
+    ├── control.c ──── Bewegungssequenz / Koordinator
+    │       │
+    │       ├── calculation.c ── Schrittzahl → Timer-Ticks (Kinematik + Ramp)
+    │       ├── motor.c ──────── Motor-Init, Richtung, Enable, Referenzfahrt
+    │       ├── sensor.c ──────── Endschalter PC8/PC9/PC10 (aktiv LOW)
+    │       └── coil.c ─────────── Elektromagnet PD0
+    │
+    └── ftm0.c  ──── FTM0 ISR-Dispatcher (CH1/2/4/5/6/7 + TOF)
+            │
+            ├── CH1  ISR  → Schrittimpuls Motor 1 (PA4)
+            ├── CH2  ISR  → Schrittimpuls Motor 2 (PA5)
+            ├── CH4  ISR  → Schrittimpuls Motor 3 (PD4)
+            ├── CH5  ISR  → Schrittimpuls Rotation (PD5)
+            ├── CH6  ISR  → Ramp-Schritt-Inkrementierer (NSTEP)
+            └── CH7  ISR  → Emergency Stop (alle Motoren sofort aus)
+----

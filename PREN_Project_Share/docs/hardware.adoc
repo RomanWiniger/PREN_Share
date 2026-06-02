@@ -8,35 +8,72 @@
 
 | Gerät | NXP Kinetis MK22F51212
 | Kern | ARM Cortex-M4 mit FPU
-| Kerntakt | 120 MHz
-| Bustakt | 60 MHz
+| Kerntakt | 120 MHz (CORECLOCK)
+| Bustakt | 60 MHz (BUSCLOCK) — Quelle für FTM0
 | Flash | 256 KB
-| Zielboards | MC_CAR (100-polig), TinyK22 (64-polig)
+| Zielboards | MC_CAR (100-polig, PINID=0x08), TinyK22 (64-polig, PINID=0x05)
+| Board-Erkennung | Zur Laufzeit via `SIM->SDID & SIM_SDID_PINID_MASK`
 |===
+
+NOTE: Das Zielsystem wird zur Compile-Zeit über `#define PLATFORM AUTO` ausgewählt. Im AUTO-Modus wird die Board-Erkennung zur Laufzeit durchgeführt.
 
 === Pin-Belegung
 
-==== Schrittmotoren
+==== Schrittmotoren (STEP-Pins)
+
+Die STEP-Pins werden als GPIO-Ausgänge konfiguriert (MUX=1). Die FTM0-Kanäle laufen im Output-Compare-Modus ohne Hardware-Pin-Ausgabe (ELSx=00) — das Toggle erfolgt manuell in der ISR über PSOR/PCOR.
 
 [cols="2,2,2,2"]
 |===
-| Motor | Schritt-Pin | Richtungs-Pin | Enable-Pin
+| Motor | STEP-Pin | FTM0-Kanal | Pull / DSE
 
-| Motor 1 (Achse 1) | PA4 | — | —
-| Motor 2 (Achse 2) | PA5 | — | —
-| Motor 3 (Achse 3) | PD4 | — | —
-| Rotationsmotor    | PD5 | — | —
+| Motor 1 (Achse 1) | PA4 | CH1 | Pull-down, DSE aktiv
+| Motor 2 (Achse 2) | PA5 | CH2 | Pull-down, DSE aktiv
+| Motor 3 (Achse 3) | PD4 | CH4 | Pull-down, DSE aktiv
+| Rotationsmotor    | PD5 | CH5 | Pull-down, DSE aktiv
+|===
+
+==== Richtungs-Pins (DIR)
+
+Alle DIR-Pins liegen auf Port B. `FWD` = HIGH (PSOR), `REV` = LOW (PCOR).
+Nach dem Setzen der Richtung muss mindestens `DIR_MIN_DELAY_TIME_MS = 1 ms` gewartet werden.
+
+[cols="2,2"]
+|===
+| Motor | DIR-Pin
+
+| Motor 1 | PB0
+| Motor 2 | PB1
+| Motor 3 | PB2
+| Rotationsmotor | PB3
+|===
+
+==== Enable-Pins (EN)
+
+Alle EN-Pins liegen auf Port B. Der Treiber ist **aktiv LOW** — `ENABLE()` setzt PCOR, `DISABLE()` setzt PSOR.
+Nach dem Aktivieren muss mindestens `ENABLE_MIN_DELAY_TIME_MS = 400 ms` gewartet werden, bevor Schritte ausgegeben werden (Treibervorschrift).
+
+[cols="2,2"]
+|===
+| Motor | EN-Pin
+
+| Motor 1 | PB16
+| Motor 2 | PB17
+| Motor 3 | PB18
+| Rotationsmotor | PB19
 |===
 
 ==== Sensoren (Endschalter)
+
+Die Endschalter sind **aktiv LOW** (Pull-up aktiv). Ein ausgelöster Sensor liefert logisch 0.
 
 [cols="2,2,3"]
 |===
 | Sensor | Pin | Konfiguration
 
-| Sensor 1 | PC8 | Digitaleingang, Pull-up
-| Sensor 2 | PC9 | Digitaleingang, Pull-up
-| Sensor 3 | PC10 | Digitaleingang, Pull-up
+| Sensor 1 (Achse 1) | PC8 | Digitaleingang, Pull-up, aktiv LOW
+| Sensor 2 (Achse 2) | PC9 | Digitaleingang, Pull-up, aktiv LOW
+| Sensor 3 (Achse 3) | PC10 | Digitaleingang, Pull-up, aktiv LOW
 |===
 
 ==== Spule (Elektromagnet)
@@ -50,27 +87,78 @@
 
 ==== Debug- / Reserve-Pins
 
+Diese Pins werden bei `DEBUG_MODE=1` oder `ISR_MONITOR=1` für Timing-Messungen per Oszilloskop genutzt.
+
+[cols="2,2,3"]
+|===
+| Signal | Pin | Typische Nutzung
+
+| RES0 / Debug 0 | PA13 | —
+| RES1 / Debug 1 | PA12 | ISR-Eingang/-Ausgang (CH1/CH2/CH6)
+| RES2 / Debug 2 | PD1  | Spulen-Monitoring (`RES1_GPIO_LOW` = Spule aus)
+| RES3 / Debug 3 | PD6  | —
+|===
+
+=== Timer — FTM0
+
+==== Timer-Takt und Auflösung
+
+[cols="2,3"]
+|===
+| Parameter | Wert
+
+| Bustakt (Quelle) | 60 MHz (`CLK_SRC_GLOBAL = 1`)
+| Prescaler | 8 (`PS_GLOBAL = 3` → 2^3)
+| Effektiver Timer-Takt | 7,5 MHz
+| Tick-Dauer | 133,33 ns
+| Timer-Modulo | 0xFFFF = 65535 Ticks
+| Max. Periode ohne Overflow | 65535 × 133,33 ns ≈ 8,74 ms
+|===
+
+==== Schrittsignal-Timing
+
+[source]
+----
+        ___________                          ___________
+_______|           |________________________|           |______
+       <--Puls---->  <------Pause---------->
+       200 µs         200 µs (Mindest)
+       1500 Ticks      1500 Ticks (MOTOR_MINPAUSE_MOD_TICK)
+----
+
+[cols="2,2,3"]
+|===
+| Parameter | Wert | Definition
+
+| Pulsbreite | 200 µs / 1500 Ticks | `MOTOR_PULSE_US = 200`, `MOTOR_PULSE_MOD_TICK`
+| Mindest-Pause | 200 µs / 1500 Ticks | `MIN_STEP_DISTANCE_US = 200`, `MOTOR_MINPAUSE_MOD_TICK`
+| Slow-Mode-Faktor | 4× | `SLOW_MODE_FACTOR = 4` (Pick & Place Modus)
+|===
+
+==== FTM0-Kanal-Zuordnung
+
+[cols="1,2,4"]
+|===
+| Kanal | Funktion | Details
+
+| CH0 | Intern (ungenutzt) | Wird im ISR-Dispatcher geprüft, hat keinen aktiven Handler
+| CH1 | Schrittimpuls Motor 1 | PA4, `FTM0CH1_IRQHandler`
+| CH2 | Schrittimpuls Motor 2 | PA5, `FTM0CH2_IRQHandler`
+| CH3 | Ungenutzt | Default-Handler (bkpt bei unerwarteter Auslösung)
+| CH4 | Schrittimpuls Motor 3 | PD4, `FTM0CH4_IRQHandler`
+| CH5 | Schrittimpuls Rotationsmotor | PD5, `FTM0CH5_IRQHandler`
+| CH6 | Ramp-Schritt-Inkrementierer | Nur aktiv bei `RAMP_MODE_NSTEP=1`; löst beim Ablauf jedes Ramp-Segments aus und inkrementiert `Ramp_Step_Curr`
+| CH7 | Emergency Stop | Immer aktiv; stoppt dauerhaft alle Motoren bei Auslösung
+|===
+
+==== NVIC-Prioritäten
+
 [cols="2,2"]
 |===
-| Signal | Pin
+| Interrupt | Priorität
 
-| Debug 0 | PA13
-| Debug 1 | PA12
-| Debug 2 | PD1
-| Debug 3 | PD6
+| FTM0 (alle Kanäle) | 12 (`PRIO_FTM0`)
+| UART0/1/2 | 8 (`PRIO_UART0/1/2`)
 |===
 
-=== Timer — FTM0-Kanal-Zuordnung
-
-FTM0 läuft mit 60 MHz Bustakt (konfigurierbarer Prescaler) und erzeugt Schrittimpulse mit einer Pulsbreite von 100 µs.
-
-[cols="2,5"]
-|===
-| Kanal | Funktion
-
-| CH1 | Schrittimpuls Motor 1
-| CH2 | Schrittimpuls Motor 2
-| CH4 | Schrittimpuls Motor 3
-| CH5 | Schrittimpuls Rotationsmotor
-| CH6 | Rampen-Schritt-Inkrementierer (aktiv bei `RAMP_MODE_NSTEP`)
-|===
+NOTE: Niedrigere Zahl = höhere Priorität. UART-Interrupts haben Priorität vor FTM0.

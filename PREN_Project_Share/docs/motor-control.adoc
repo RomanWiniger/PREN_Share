@@ -1,33 +1,205 @@
 == Motorsteuerung
 
-=== Schrittimpuls-Erzeugung
+=== ISR-Dispatcher
 
-Schrittimpulse werden über *FTM0 Output-Compare-Interrupts* erzeugt. Jeder Motor hat einen dedizierten Kanal-ISR, der:
+FTM0 hat einen einzigen Hardware-IRQ-Vektor. `FTM0_IRQHandler()` in `ftm0.c` überprüft für jeden Kanal, ob sowohl das Channel-Flag (CHF) als auch das Channel-Interrupt-Enable (CHIE) gesetzt sind, und ruft dann die entsprechende per-Kanal ISR-Funktion auf:
 
-1. Den Schritt-Pin auf HIGH setzt
-2. 100 µs wartet (Pulsbreite)
-3. Den Schritt-Pin auf LOW setzt
-4. Den nächsten Impuls basierend auf der konfigurierten Schrittpause plant
+[source,c]
+----
+void FTM0_IRQHandler(void) {
+    if ((FTM0->CONTROLS[1].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH1_IRQHandler();
+    if ((FTM0->CONTROLS[2].CnSC & CHF_CHIE_MASK) == CHF_CHIE_MASK) FTM0CH2_IRQHandler();
+    // ... CH4, CH5, CH6, CH7
+    if ((FTM0->SC & TOF_TOIE_MASK) == TOF_TOIE_MASK) FTM0TOF_IRQHandler();
+}
+----
 
-Die Schrittpause bestimmt die Motorgeschwindigkeit. Eine kürzere Pause bedeutet eine schnellere Bewegung.
+Das CHF-Flag muss am Beginn jeder per-Kanal-ISR manuell gelöscht werden (`CnSC &= ~FTM_CnSC_CHF(1)`).
 
-=== Überlaufbehandlung
+=== Schrittimpuls-Erzeugung (Normalbetrieb)
 
-FTM0 verwendet einen 16-Bit-Zähler (max. 65535 Ticks). Bei großen Schrittzahlen verfolgt die ISR Überlaufzyklen über einen 32-Bit-Zähler, der dekrementiert wird, bis die verbleibenden Schritte in einen einzelnen Timer-Zyklus passen.
+Die drei Linearachsen (CH1/CH2/CH4) und der Rotationsmotor (CH5) folgen demselben Zwei-Zustands-Automaten:
 
-=== Rampenprofile
+[source]
+----
+ISR ausgelöst (CnSC.CHF=1)
+    │
+    ├─ STEP-Pin war HIGH?  ──────────────────────────────────────────┐
+    │   (MOTOR_STEP_STATUS())                                        │
+    │                                                                ▼
+    │   Ja: Puls beenden                               Nein: Paus beenden, Puls starten
+    │   ├── STEP_GPIO_LOW()                            ├── [OVERFLOW_HANDLING]
+    │   ├── CnV += Motor_Pause     (Pause-Ticks)       │     Motor_Step_OF_Curr > 0?
+    │   ├── Step-Corrector anwenden (Rundungsfehler)   │     Ja: OF_Curr-- (kein Toggle)
+    │   └── Alle Schritte fertig?                      │     Nein:
+    │         → CHIE deaktivieren                      │       STEP_GPIO_HIGH()
+    │                                                   │       CnV += Minimal_Pulse
+    │                                                   │       Motor_Step_Curr++
+    │                                                   └──────────────────────────────
+----
 
-Drei Beschleunigungsrampen-Strategien stehen zur Verfügung (zur Kompilierzeit ausgewählt):
+*Pulsbreite:* 200 µs / 1500 Ticks (`MOTOR_PULSE_MOD_TICK`) +
+*Mindest-Pause:* 200 µs / 1500 Ticks (`MOTOR_MINPAUSE_MOD_TICK`)
 
-[cols="2,5"]
+=== Overflow-Behandlung
+
+FTM0 hat einen 16-Bit-Zähler (max. 65535 Ticks = 8,74 ms). Für langsame Motoren (lange Pausen) kann die benötigte Pause > 65535 Ticks sein.
+
+`calcPulsePause()` löst dies vor dem Bewegungsstart auf:
+
+[source,c]
+----
+// Aufteilung der langen Pause:
+Motor_Step_OF  = tmp_M_Pause / UINT16_MAX;   // Anzahl ganzer Overflow-Perioden
+Motor_Pause    = tmp_M_Pause % UINT16_MAX;   // Restpause < 65535 Ticks
+----
+
+Die Motor-ISR zählt `Motor_Step_OF_Curr` herunter:
+* Solange `Motor_Step_OF_Curr > 0`: CnV unverändert lassen (nächste Auslösung nach 65535 weiteren Ticks) und Zähler dekrementieren
+* Wenn `Motor_Step_OF_Curr == 0`: Puls ausgeben und `Motor_Step_OF_Curr` zurücksetzen
+
+=== Step-Corrector (Rundungsfehler-Kompensation)
+
+Bei der Synchronisation mehrerer Achsen wird die Pause der langsameren Motoren per Division berechnet. Die ganzzahlige Division erzeugt Rundungsfehler, die sich über viele Schritte zu einer Timing-Abweichung aufsummieren.
+
+Der Corrector verteilt den Fehler gleichmässig über alle Schritte, indem alle N Schritte ein einzelner Extra-Tick addiert wird:
+
+[source,c]
+----
+// Berechnung in calcPulsePause():
+Motor_Step_Corrector[0] = (Steps / error) + 1;    // 1 extra Tick alle N Schritte
+// Kaskadierte Korrekturen für Restfehler:
+for (int i = 0; i < NUM_CORRECTOR_LOOPS-1; i++) {
+    error -= (1.0 / Motor_Step_Corrector[i]) * Steps;
+    Motor_Step_Corrector[i+1] = Steps / error;
+}
+----
+
+*Anwendung in der ISR* (am Ende des Puls-Abschlusses):
+[source,c]
+----
+for (int i = 0; i < NUM_CORRECTOR_LOOPS; i++) {
+    if (Motor_Step_Corrector[i]) {                            // Eintrag gültig (≠0)?
+        if ((Motor_Step_Curr % Motor_Step_Corrector[i]) == 0) {  // Vielfaches erreicht?
+            FTM0->CONTROLS[x].CnV += 1;                      // 1 Tick extra addieren
+        }
+    }
+}
+----
+
+`NUM_CORRECTOR_LOOPS = 10` — bis zu 10 kaskadierte Korrekturstufen sind möglich.
+
+=== N-Schritt-Rampenprofil (`RAMP_MODE_NSTEP`)
+
+==== Konzept
+
+Die Anlauframpe beschleunigt den Motor in `RAMP_NSTEPS = 10` Stufen von langsam auf die Zielgeschwindigkeit. Jede Stufe ist ein Zeitsegment fixer Länge. Das Segment der ersten Stufe ist am längsten (langsamste Geschwindigkeit), jede folgende Stufe ist um `RAMP_NSTEPS_STEP_PERC = 100 %` kürzer.
+
+[source]
+----
+Segment-Faktor:
+  Stufe 10 (letzte, schnellste):  factor = 1 + 10×1.00 = 11.0
+  Stufe  9:                       factor = 1 +  9×1.00 = 10.0
+  ...
+  Stufe  1 (erste, langsamste):   factor = 1 +  1×1.00 =  2.0
+  (Stufe 0 = übersprungen, CnV = 0)
+
+Segment-Dauer = factor × RAMP_NSTEPS_STEPS
+  Stufe 1:  2 × 20000 =  40000 Ticks ≈ 5,33 ms
+  Stufe 10: 11 × 20000 = 220000 Ticks ≈ 29,3 ms
+  → Gesamtrampe ≈ Summe aller Stufen
+----
+
+Innerhalb jedes Segments läuft der Motor mit der Pulsbreite und Pause des jeweiligen Segments (skaliert mit dem gleichen Faktor).
+
+==== Segment-Analyse (`analyzeSegment` / `calcEndPoint`)
+
+Vor dem Bewegungsstart berechnet `calcPulsePause()` für jedes Segment und jeden Motor:
+
+* `Ramp_Mx_Pulse_Ticks[i]` — Pulsbreite in Stufe i
+* `Ramp_Mx_Pause_Ticks[i]` — Pausen-Breite in Stufe i
+* `Ramp_Mx_End_Rem_Ticks[i]` — Wie viele Ticks im aktuellen Zustand am Segmentende noch verbleiben
+* `Ramp_Mx_Start_State[i]` — In welchem Zustand (HIGH/LOW) der Motor das Segment betritt
+* `Ramp_Mx_Rem_Pending[i]` — Ob am Segmentübergang ein Rest vom vorherigen Segment abgearbeitet werden muss
+
+==== CH6-ISR: Ramp-Step-Inkrementierer
+
+CH6 feuert am Ende jedes Ramp-Segments und koordiniert den Übergang zur nächsten Stufe:
+
+1. Overflow-Zähler für das aktuelle Segment dekrementieren
+2. Wenn Overflow abgearbeitet: FTM0 anhalten (`SC &= ~CLKS`)
+3. `Ramp_Step_Curr` inkrementieren
+4. CnV für alle drei Motor-Kanäle auf `Ramp_Mx_End_Rem_Ticks[neues Segment]` setzen
+5. `Ramp_Mx_Rem_Pending[neues Segment] = false` (Pending wird separat verwaltet)
+6. FTM0 neu starten (CNT = 0, SC = CLK|PS)
+7. Wenn alle Segmente abgearbeitet: CH6-Interrupt deaktivieren → Normalbetrieb
+
+==== Motor-ISR im Ramp-Modus
+
+Solange `Ramp_Step_Curr <= RAMP_NSTEPS`:
+
+[source]
+----
+Ramp_Mx_Rem_Pending[Ramp_Step_Curr] == true?
+  Ja: Overflow-Rest von Vorsegment abarbeiten, dann in Start_State wechseln
+  Nein:
+    ramp_motor_state == HIGH?
+      Overflow fertig? → GPIO_LOW, CnV += Pause_Ticks
+      sonst: Overflow-Zähler--
+    ramp_motor_state == LOW?
+      Overflow fertig? → GPIO_HIGH, CnV += Pulse_Ticks, Step_Curr++
+      sonst: Overflow-Zähler--
+----
+
+=== End-Rampe (`RAMP_MODE_END`)
+
+Am Ende der Bewegung wird die Motorgeschwindigkeit stufenweise reduziert, um ein Überschiessen zu vermeiden. Die Reduktion erfolgt durch Änderung des FTM0-Prescalers:
+
+[cols="2,2,3"]
 |===
-| Modus | Beschreibung
+| Parameter | Wert | Bedeutung
 
-| `RAMP_MODE_PS` | Moduliert den FTM-Prescaler in 4 diskreten Stufen, um Anlaufstrom und Geräusche zu reduzieren
-| `RAMP_MODE_NSTEP` | Verwendet eine feste N-Schritt-Tabelle (Standard: 20 Schritte); FTM CH6 inkrementiert den Rampen-Index bei jedem Schritt
-| `RAMP_MODE_PREMIUM` | Berechnet eine lineare Rampe in der ISR bei jedem Schritt für die gleichmässigste Beschleunigung
+| `RAMP_END_PS1` | 150 | Ab dieser Restschrittzahl: Prescaler-Stufe 1 (langsamerer Takt)
+| `RAMP_END_PS2` | 50  | Ab dieser Restschrittzahl: Prescaler-Stufe 2 (noch langsamer)
+| `RAMP_END_PS3` | 0   | (deaktiviert)
+| `RAMP_END_PS4` | 0   | (deaktiviert)
 |===
 
-=== Referenzfahrt
+Die Funktion `ftm0ReducePS()` führt den Prescaler-Wechsel atomar durch:
 
-`moveToInitPos()` fährt alle Achsen langsam in Richtung der Endschalter. Wenn ein Sensor auslöst (aktiv LOW über Pull-up), stoppt die entsprechende Achse und ihre Position wird auf null gesetzt.
+1. Aktuellen CNT-Wert lesen
+2. FTM0-Takt stoppen
+3. Alle Motor-CnV-Werte relativ zu CNT=0 anpassen (vermeidet verpasste Compare-Events)
+4. FTM0 mit neuem Prescaler neu starten
+
+NOTE: Die 10 `__NOP()`-Anweisungen zwischen den CnV-Korrekturen sind absichtlich — sie verhindern verpasste Interrupts beim Prescaler-Wechsel und dürfen nicht entfernt werden.
+
+=== Referenzfahrt (`moveToInitPos`)
+
+`moveToInitPos()` fährt alle Achsen langsam (mit `SLOW_MODE_FACTOR = 4`× der minimalen Pause) in Richtung der Endschalter:
+
+1. Richtungs-Pins auf REV setzen
+2. Schrittmotoren mit reduzierter Geschwindigkeit starten
+3. Kontinuierlich Sensor-Status prüfen (PC8/PC9/PC10, aktiv LOW)
+4. Wenn Sensor auslöst: den zugehörigen Motor-Interrupt deaktivieren
+5. Wenn alle drei Sensoren ausgelöst: Bewegung stoppen, alle `Motor_Step_Curr` auf 0 setzen
+
+=== Emergency Stop (CH7)
+
+FTM0-Kanal 7 ist permanent als Output-Compare-Interrupt konfiguriert und wird *nie* deaktiviert (`ftm0StopIRQ()` lässt CH7 absichtlich aktiv).
+
+Bei Auslösung der CH7-ISR:
+1. `termWrite("ERROR")` — Fehlermeldung über UART senden
+2. Alle STEP-Pins sofort auf LOW (`GPIO_LOW()`)
+3. Spule deaktivieren (`RES1_GPIO_LOW()`)
+4. Endlosschleife: Alle Motor-Kanal-Interrupts (CH1/2/4/5/6) in jeder Iteration deaktivieren — das System ist dauerhaft blockiert und muss neu gestartet werden
+
+=== Synchronisation mehrerer Achsen
+
+Die drei Linearachsen werden so synchronisiert, dass sie gleichzeitig starten und enden. Dazu bestimmt `calcPulsePause()` den Motor mit den meisten Schritten (Master):
+
+* Der Master-Motor erhält die minimale Pause (`MOTOR_MINPAUSE_MOD_TICK`)
+* Die anderen Motoren erhalten eine proportional längere Pause: `Pause = (TotalTicks - Pulse×Steps) / Steps`
+* `TotalTicks` = Gesamtdauer der Bewegung in Ticks (berechnet aus Master)
+
+Dadurch finishen alle drei Achsen zur gleichen Zeit, auch wenn sie unterschiedlich viele Schritte ausführen.

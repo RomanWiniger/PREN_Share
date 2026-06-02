@@ -5,21 +5,29 @@ Die Firmware ist als Bare-Metal-C (kein RTOS) mit einem modularen Schichtendesig
 [source]
 ----
 source/
-├── main.c               Einstiegspunkt, Testsequenzen
-├── platform.h           Takt-Konfigurationen, Fehlercodes, Debug-Makros
-├── globals.h            Globaler Motorzustand und Timer-Parameter
-├── control/             Roboter-Steuerlogik
-│   ├── control.c/h      Zentraler Befehls-Dispatcher
-│   ├── motor/           Schrittmotor-Treiber
-│   ├── sensor/          Endschalter-Sensoren
-│   └── coil/            Elektromagnet-Steuerung
-├── com/                 Kommunikation
-│   ├── uart2.c/h        UART2-Treiber (115200 Baud)
-│   └── term.c/h         Terminal-Befehlshandler
-└── utils/               Hilfsfunktionen
-    ├── ftm0.c/h         FTM0-Timer (Schrittimpuls-Erzeugung)
-    ├── wait.c/h         Verzögerungsfunktionen
-    └── debug.c/h        Debug-Hilfsfunktionen
+├── main.c                   Einstiegspunkt, Testsequenzen
+├── platform.h               Takt-Konfigurationen, Fehlercodes, Debug-Makros
+├── globals.h                Globaler Motorzustand, Timer-Parameter, Ramp-Arrays
+├── control/                 Roboter-Steuerlogik
+│   ├── control.c/h          Zentraler Befehls-Dispatcher, globale Variablen-Init
+│   ├── motor/
+│   │   ├── motor.c/h        Motor-Init, Richtung, Enable, Referenzfahrt
+│   │   ├── calculation.c/h  Schritt-Pause-Berechnung, Ramp-Profil-Berechnung
+│   │   ├── motor_config.h   Pin-Makros (STEP/DIR/EN) für alle 4 Motoren
+│   │   └── emergency.c/h    Emergency-Stop-Init (FTM0 CH7)
+│   ├── sensor/
+│   │   ├── sensor.c/h       Endschalter-Abfrage
+│   │   └── sensor_config.h  Pin-Makros für Sensoren PC8/PC9/PC10
+│   └── coil/
+│       ├── coil.c/h         Elektromagnet Ein/Aus
+│       └── coil_config.h    Pin-Makros für Spule PD0
+├── com/                     Kommunikation
+│   ├── uart.c/h             UART2-Treiber (Raspberry Pi, 115200 Baud)
+│   └── term.c/h             Befehls-Registry und -Dispatcher
+└── utils/                   Hilfsfunktionen
+    ├── ftm0.c/h             FTM0-Init, ISR-Dispatcher, PS-Reduktion
+    ├── wait.c/h             Busy-Wait-Delays (µs/ms)
+    └── debug.c/h            Debug-Hilfsfunktionen
 ----
 
 === Modulverantwortlichkeiten
@@ -28,29 +36,87 @@ source/
 |===
 | Modul | Verantwortlichkeit
 
-| `control` | Initialisiert alle Subsysteme; leitet empfangene Befehle an Motor-, Spulen- und Sensormodule weiter
-| `motor` | Erzeugt präzise Schrittimpulse über FTM0-Interrupt-Kanäle; verwaltet Rampenprofile und Überlauf
-| `calculation` | Wandelt die gewünschte Roboterposition in einzelne Achsen-Schrittzahlen um (Kinematik)
-| `sensor` | Liest den Endschalter-Zustand an PC8, PC9, PC10 für die Referenzfahrt
-| `coil` | Schaltet den Elektromagneten an PD0
-| `term` | Parst UART-Befehle und leitet sie an registrierte Handler weiter
-| `ftm0` | Konfiguriert FTM0-Kanäle und bedient ISRs für die Schritt-Zeitmessung
+| `control.c` | Initialisiert alle Subsysteme (Takt-Gating, GPIO, UART, FTM0, Sensoren, Spule); hält globale Motorzustandsvariablen; leitet empfangene Befehle an Motor-, Spulen- und Sensormodule weiter
+| `motor.c` | Konfiguriert FTM0-Kanäle als Output-Compare; setzt Richtungs- und Enable-Pins; führt die Referenzfahrt (`moveToInitPos`) durch; startet und stoppt die Impuls-ISRs
+| `calculation.c` | Berechnet aus den Schrittzahlen aller drei Achsen die zeitlich synchronisierten Pausen-Ticks; füllt alle Ramp-Arrays (`Ramp_Mx_Pause_Ticks`, `Ramp_Mx_Pulse_Ticks`, `Ramp_Mx_End_Rem_Ticks` und deren `_OF`-Varianten) vor dem Bewegungsstart; berechnet den Step-Corrector für Rundungsfehler
+| `ftm0.c` | Implementiert `FTM0_IRQHandler` als Dispatcher für CH0–CH7 und TOF; enthält alle per-Kanal ISR-Routinen (CH1/2/4/5/6/7); stellt Hilfsfunktionen für Init, Clock-Start/-Stopp und Prescaler-Änderung bereit
+| `emergency.c` | Richtet FTM0 CH7 als Output-Compare-Interrupt ein; die CH7-ISR setzt alle Motor-Ausgänge auf LOW und deaktiviert alle Kanal-Interrupts dauerhaft
+| `sensor.c` | Liest die Endschalter-Zustände an PC8, PC9, PC10 per GPIO; liefert aktiv-LOW-Logik für die Referenzfahrt
+| `coil.c` | Schaltet den Elektromagneten (PD0) ein und aus
+| `term.c` | Registry-Muster: Jeder Befehl registriert einen Handler; beim Empfang eines vollständigen UART-Frames wird der passende Handler aufgerufen
 |===
 
-=== Kompilierzeit-Konfigurationsflags
+=== Globale Datenstrukturen
 
-Definiert in `globals.h`:
+==== `current_config_t` (globals.h)
+
+[source,c]
+----
+typedef struct {
+    uint16_t Minimal_Pause;    // Pause-Ticks (nach Overflow-Auflösung)
+    uint16_t Minimal_Pulse;    // Puls-Ticks (nach Overflow-Auflösung)
+    bool     RampIsDisabled;   // true = Rampe aktiv (Ramp_Disabled=false)
+} current_config_t;
+----
+
+Diese Struktur wird von `calcPulsePause()` befüllt und von den Motor-ISRs gelesen.
+
+==== Ramp-Arrays
+
+Für jeden Motor (M1/M2/M3) und jeden Rampen-Schritt `i` (0…RAMP_NSTEPS) existieren folgende Arrays:
 
 [cols="2,5"]
 |===
-| Flag | Wirkung
+| Array | Bedeutung
 
-| `DEBUG_MODE` | Aktiviert Debug-Pin-Überwachung, deaktiviert die Hauptschleife
-| `TEST_SEQUENCE` | Führt beim Start einen automatisierten Bewegungstest aus (erfordert `DEBUG_MODE`)
-| `RAMP_ACTIVE` | Aktiviert die Motoranlauframpe
-| `RAMP_MODE_PS` | Rampe über Prescaler-Modulation (4 Stufen)
-| `RAMP_MODE_NSTEP` | Rampe über N-Schritt-Profil (Standard: 20 Schritte)
-| `RAMP_MODE_PREMIUM` | Lineare Rampe, in der ISR berechnet
-| `ISR_MONITOR` | Gibt ISR-Timing auf Reserve-Debug-Pins aus
-| `SIM_SENSORS` | Simuliert Sensorsignale, wenn keine Hardware angeschlossen ist
+| `Ramp_Mx_Pulse_Ticks[i]` | Pulsbreite (Ticks) in Rampen-Stufe i (16-bit Rest nach Overflow)
+| `Ramp_Mx_Pulse_Ticks_OF[i]` | Overflow-Zähler für Pulsbreite (wie viele Male 65535 Ticks abgezählt werden)
+| `Ramp_Mx_Pause_Ticks[i]` | Pausen-Breite (Ticks) in Rampen-Stufe i
+| `Ramp_Mx_Pause_Ticks_OF[i]` | Overflow-Zähler für Pausen-Breite
+| `Ramp_Mx_End_Rem_Ticks[i]` | Verbleibende Ticks im aktuellen Zustand am Ende von Segment i
+| `Ramp_Mx_End_Rem_Ticks_OF[i]` | Overflow-Zähler für End-Rest
+| `Ramp_Mx_Rem_Pending[i]` | true = ISR muss zuerst End-Rest von Segment i-1 abarbeiten
+| `Ramp_Mx_Start_State[i]` | Zustand (HIGH=true/LOW=false) am Beginn von Segment i
 |===
+
+Die `_Curr`-Varianten (z.B. `Ramp_Mx_Pause_Ticks_OF_Curr[i]`) werden von den ISRs dekrementiert und durch die Reset-Werte neu geladen.
+
+=== Kompilierzeit-Konfigurationsflags
+
+Definiert in `globals.h` (Motortiming, Rampe) und `platform.h` (Hardware, UART):
+
+[cols="2,1,5"]
+|===
+| Flag | Standard | Wirkung
+
+| `DEBUG_MODE` | `0` | Aktiviert Debug-Pin-Überwachung (`DEBUG_MODE_ISR1/2/3`); deaktiviert die Hauptschleife
+| `TEST_SEQUENCE` | `0` | Führt beim Start einen automatisierten Bewegungstest aus (erfordert `DEBUG_MODE=1`)
+| `RAMP_MODE_NSTEP` | `1` | Aktiviert N-Schritt-Rampenprofil (Anlauf-Rampe); CH6-ISR inkrementiert den Ramp-Schritt-Index
+| `RAMP_MODE_END` | `1` | Aktiviert die Brems-Rampe am Ende der Bewegung (Prescaler-Reduktion bei `RAMP_END_PS1`/`RAMP_END_PS2` verbleibenden Schritten)
+| `RAMP_MODE_PREMIUM` | `0` | Alternative: lineare Rampe, in der ISR berechnet (aktuell nicht aktiv)
+| `OVERFLOW_HANDLING` | `1` | Aktiviert 32-Bit-Overflow-Zähler für Pausen > 65535 Ticks (in `motor_config.h`)
+| `ISR_MONITOR` | `0` | Gibt ISR-Timing auf Reserve-Debug-Pins aus
+| `SIM_SENSORS` | `0` | Simuliert Sensorsignale, wenn keine Hardware angeschlossen ist
+| `COMMAND_BYTE` | `0` | Experimentelles Feature: optionales Befehls-Byte am Anfang des UART-Frames
+| `ENABLE_STEP` | `1` | Kompiliert STEP-Pin-Makros ein
+| `ENABLE_DIR` | `1` | Kompiliert DIR-Pin-Makros ein
+| `ENABLE_EN` | `1` | Kompiliert ENABLE-Pin-Makros ein
+| `ENABLE_ROT` | `1` | Kompiliert Rotationsmotor-Support ein
+|===
+
+=== Startsequenz
+
+[source]
+----
+main()
+  └── controlInit()
+        ├── clkGating()           GPIO-Ports A…E einschalten
+        ├── uart2Init()           UART2 für Raspberry Pi initialisieren
+        ├── motorInit()           FTM0, GPIO-Pins, Emergency-Stop, Ramp-Arrays
+        ├── sensorInit()          Endschalter-Pins konfigurieren
+        ├── coilInit()            Spulen-Pin konfigurieren
+        └── ftm0EnableIRQ()       FTM0-IRQ im NVIC aktivieren (Prio 12)
+
+  └── controlRun()   [Hauptschleife]
+        └── warte auf UART-Befehl → term.c dispatcht → Handler
+----

@@ -1,36 +1,74 @@
 == Kommunikation
 
-=== UART-Schnittstelle
+=== UART-Schnittstellen
 
-Der Mikrocontroller kommuniziert mit dem Raspberry Pi über *UART2* mit *115200 Baud*.
+Das System nutzt zwei serielle Schnittstellen:
 
-Befehle werden als `ReceivedCommand`-Struktur empfangen:
+[cols="2,2,3"]
+|===
+| UART | Baudrate | Zweck
+
+| UART2 | 115200 Baud | Hauptkommunikation mit Raspberry Pi (Bewegungsbefehle)
+| UART0/1 | 57600 Baud | Debug-Terminal (`TERMINAL_BAUDRATE` in `platform.h`)
+|===
+
+=== Kommunikationsprotokoll (UART2)
+
+Die Kommunikation zwischen Raspberry Pi und Mikrocontroller läuft über UART2. Befehle werden als strukturiertes Binärpaket in Form der `ReceivedCommand`-Struktur übertragen:
 
 [source,c]
 ----
 typedef struct {
-    int32_t Steps1;       // Schrittzahl Achse 1
-    int32_t Steps2;       // Schrittzahl Achse 2
-    int32_t Steps3;       // Schrittzahl Achse 3
-    int32_t StepsRot;     // Schrittzahl Rotationsmotor
-    bool    ActCoil;      // Elektromagnet aktivieren
-    bool    ErrorHandling;// Fehlerbehandlungsmodus aktivieren
+    int32_t Steps1;        // Schrittzahl Achse 1 (negativ = Rückwärts)
+    int32_t Steps2;        // Schrittzahl Achse 2
+    int32_t Steps3;        // Schrittzahl Achse 3
+    int32_t StepsRot;      // Schrittzahl Rotationsmotor
+    bool    ActCoil;       // true = Elektromagnet einschalten
+    bool    ErrorHandling; // true = Fehlerbehandlungsmodus aktiv
 } ReceivedCommand;
 ----
 
-=== Befehlssatz
+Die Struktur wird komplett (alle Felder) pro Bewegungsbefehl übertragen. Der Mikrocontroller führt nach Empfang die folgenden Schritte aus:
+
+1. Richtungspins für alle Achsen setzen (basierend auf Vorzeichen der Steps)
+2. `calcPulsePause()` aufrufen → Berechnet Timer-Ticks und Ramp-Arrays
+3. FTM0-Kanal-Interrupts für alle beteiligten Achsen aktivieren
+4. Spule schalten (falls `ActCoil` gesetzt)
+5. FTM0-Takt starten (`ftm0StartClk`)
+
+=== Befehlssatz (Textkommunikation)
+
+Über den Debug-UART (UART0/1) können Text-Befehle gesendet werden. `term.c` parst diese und ruft registrierte Handler auf:
 
 [cols="2,5"]
 |===
 | Befehl | Beschreibung
 
-| `start` | Hauptbetriebsschleife starten
-| `init` | Alle Achsen über Endschalter in die Ausgangsposition fahren
-| `camera` | Kameraaufnahme auslösen
+| `start` | Hauptbetriebsschleife starten (wartet auf Raspberry-Pi-Befehle)
+| `init` | Alle Achsen über Endschalter in die Ausgangsposition fahren (Referenzfahrt)
+| `camera` | Kameraaufnahme auslösen (Signal an Raspberry Pi)
 | `puzzleBegin` | Puzzle-Lösungssequenz starten
 | `puzzleEnd` | Puzzle-Lösungssequenz beenden
 |===
 
-=== Terminal-Handler
+=== Terminal-Handler (`term.c`)
 
-`term.c` implementiert einen Befehls-Dispatcher nach dem Registry-Muster. Jeder Befehl registriert eine Handler-Funktion. Beim Empfang eines vollständigen UART-Frames ruft der Dispatcher den passenden Handler auf.
+`term.c` implementiert einen Befehls-Dispatcher nach dem Registry-Muster:
+
+* Beim Start registriert jedes Modul seine Handler-Funktion mit einem Schlüsselwort
+* Der UART-Interrupt empfängt Zeichen und puffert sie bis zum Zeilenende (`\n` oder `\r`)
+* Der Dispatcher vergleicht den empfangenen String mit allen registrierten Schlüsselwörtern
+* Bei Treffer wird der zugehörige Handler aufgerufen
+
+[source,c]
+----
+// Beispiel-Registrierung (aus control.c / motor.c):
+termRegister("init",  handleInit);
+termRegister("start", handleStart);
+----
+
+=== Fehlerbehandlung
+
+* Bei ungültigem Befehl gibt `term.c` den Fehlercode `EC_INVALID_CMD` zurück
+* Der Emergency-Stop-Handler (CH7-ISR) sendet `"ERROR"` über `termWrite()` und hält das System dauerhaft an
+* Die letzten ausgeführten Schritte/Richtungen werden in `M1_Last_Step`, `M2_Last_Step`, `M3_Last_Step`, `MR_Last_Step` (und `_Dir`-Varianten) gespeichert für die Fehler-Diagnose

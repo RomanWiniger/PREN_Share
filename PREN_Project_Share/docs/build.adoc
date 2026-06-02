@@ -2,8 +2,10 @@
 
 === Voraussetzungen
 
-* MCUXpresso IDE (NXP) oder arm-none-eabi-gcc Toolchain
-* J-Link oder OpenSDA Debug-Probe
+* MCUXpresso IDE (NXP) — empfohlen, enthält CMSIS und Kinetis SDK
+* Oder: `arm-none-eabi-gcc` Toolchain mit GNU Make
+* J-Link Debug-Probe *oder* OpenSDA (auf MC_CAR-Board integriert)
+* Optional: J-Link Commander für Kommandozeilen-Flash
 
 === Erstellen mit MCUXpresso
 
@@ -13,6 +15,8 @@
 4. Auf *Build* klicken (oder `Ctrl+B` drücken)
 
 Das Ausgabe-Artefakt ist `Debug/PREN_Project_Share.axf`.
+
+NOTE: Bei Compiler-Warnings zu `implicit declaration` oder undeklarierten Funktionen: Sicherstellen, dass alle Header-Dateien korrekt eingebunden sind. Die Reihenfolge der Includes in `motor.c` und `calculation.c` ist relevant.
 
 === Erstellen über die Kommandozeile
 
@@ -34,13 +38,84 @@ JLinkExe -device MK22FN512xxx12 -if SWD -speed 4000
 > go
 ----
 
+Für automatisiertes Flashen (z.B. in CI):
+[source,bash]
+----
+JLinkExe -device MK22FN512xxx12 -if SWD -speed 4000 -autoconnect 1 \
+  -CommanderScript flash.jlink
+----
+
+mit `flash.jlink`:
+[source]
+----
+loadfile Debug/PREN_Project_Share.axf
+r
+go
+exit
+----
+
+=== Kompilierzeit-Konfiguration anpassen
+
+Wichtige Flags in `globals.h` (Motortiming & Rampe):
+
+[source,c]
+----
+// Timing
+#define MOTOR_PULSE_US          200   // Pulsbreite [µs]
+#define MIN_STEP_DISTANCE_US    200   // Mindestpause [µs]
+#define SLOW_MODE_FACTOR        4     // Geschwindigkeits-Divisor für Pick&Place
+
+// Rampe (Anlauf)
+#define RAMP_MODE_NSTEP         1     // N-Schritt-Rampe aktivieren
+#define RAMP_NSTEPS             10    // Anzahl Rampen-Stufen
+#define RAMP_NSTEPS_STEPS       20000 // Ticks pro Stufe
+#define RAMP_NSTEPS_STEP_PERC   100   // Prozentuale Verlängerung pro Stufe [%]
+
+// Endrampe (Bremsen)
+#define RAMP_MODE_END           1
+#define RAMP_END_PS1            150   // Prescaler-Reduktion ab N verbleibenden Schritten
+#define RAMP_END_PS2            50
+----
+
+Wichtige Flags in `platform.h` (Hardware):
+
+[source,c]
+----
+#define PLATFORM    AUTO      // Board-Erkennung zur Laufzeit (MC_CAR oder TinyK22)
+#define DEBUG_LED   0         // Debug-LEDs aktivieren
+#define TERMINAL_BAUDRATE  57600  // Debug-UART Baudrate
+----
+
 === Debug-Modi
 
 Folgende Flags in `globals.h` vor dem Erstellen setzen:
 
 [source,c]
 ----
-#define DEBUG_MODE      1   // Debug-Pin-Ausgabe aktivieren, Hauptschleife deaktivieren
+#define DEBUG_MODE      1   // Debug-Pin-Ausgabe (RES1), Hauptschleife deaktivieren
 #define TEST_SEQUENCE   1   // Automatisierten Motortest beim Start ausführen
 #define ISR_MONITOR     1   // Reserve-Pins in ISRs für Timing-Analyse umschalten
 ----
+
+Mit `DEBUG_MODE=1` werden zusätzlich aktiviert (wenn `1` gesetzt):
+[source,c]
+----
+#define DEBUG_MODE_ISR1  1  // RES1-Pin in CH1-ISR togglen (Motor 1 Timing)
+#define DEBUG_MODE_ISR2  1  // RES1-Pin in CH2-ISR togglen (Motor 2 Timing)
+#define DEBUG_MODE_ISR3  1  // RES1-Pin in CH4-ISR togglen (Motor 3 Timing)
+#define DEBUG_MODE_SEQ   1  // CH6-Sequenz-Monitoring
+----
+
+Diese Pins können am Oszilloskop gemessen werden, um ISR-Dauer und Timing-Jitter zu analysieren.
+
+=== Häufige Build-Probleme
+
+[cols="2,4"]
+|===
+| Problem | Lösung
+
+| Linker-Fehler `undefined reference to Ramp_M1_...` | Sicherstellen, dass `control.c` mit dem Rest kompiliert wird — dort sind die globalen Ramp-Arrays definiert
+| FTM0 feuert nicht | Prüfen ob `ftm0StartClk()` aufgerufen wurde und `ftm0EnableIRQ()` vor dem Start aktiv ist
+| Motoren starten nicht synchron | `RAMP_NSTEPS_FIRST_MOD` zu klein — CnV-Wert < ISR-Ausführungszeit → CH6 feuert zu früh
+| Emergency-Stop löst unerwartet aus | CH7-CnV prüfen; bei Init muss ein gültiger Auslöse-Zeitpunkt gesetzt sein
+|===
